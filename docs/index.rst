@@ -84,7 +84,7 @@ Inputs
 Outputs
 ~~~~~~~
 
-The output will have four sub-directory, bbcms, final_assembly, mapping and spades3. The main assembly contigs output is in final_assembly/assembly.contigs.fasta.
+The output will have four sub-directories, bbcms, final_assembly, mapping and spades3. The main assembly contigs output is in final_assembly/assembly.contigs.fasta.
 
 Below is a part list of all output files:: 
 
@@ -148,7 +148,6 @@ Description of the files in each sub-directory:
 - .conf file: the conf file for running Cromwell.
 - .sh file: the shell script for running the example workflow
 	
-Input files
 
 Version History
 ---------------

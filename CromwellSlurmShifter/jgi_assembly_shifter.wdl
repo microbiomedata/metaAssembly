@@ -10,18 +10,27 @@ workflow jgi_meta {
           input: input_files=input_file, container=bbtools_container
     }
     call assy {
-         input: infile1=bbcms.out1, infile2=bbcms.out2, container=spades_container
+         input: infile1=bbcms.out1,
+         infile2=bbcms.out2,
+         container=spades_container
     }
     call create_agp {
-         input: scaffolds_in=assy.out, container=bbtools_container, rename_contig_prefix = rename_contig_prefix
+         input: scaffolds_in=assy.out,
+         container=bbtools_container,
+         rename_contig_prefix = rename_contig_prefix
     }
     call read_mapping_pairs {
-         input: reads=input_file, ref=create_agp.outcontigs, container=bbtools_container
+         input: reads=input_file,
+         ref=create_agp.outcontigs,
+         container=bbtools_container
     }
     call make_output {
-         input: outdir= outdir, bbcms_output=bbcms.out1, assy_output=assy.out, agp_output=create_agp.outcontigs,mapping_output=read_mapping_pairs.outcovfile
+         input: outdir= outdir,
+         bbcms_output=bbcms.out1,
+         assy_output=assy.out,
+         agp_output=create_agp.outcontigs,
+         mapping_output=read_mapping_pairs.outcovfile
     }
-
 }
 task make_output{
  	String outdir

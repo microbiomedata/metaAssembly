@@ -22,6 +22,12 @@ workflow jgi_meta {
          input: outdir= outdir, bbcms_output=bbcms.out1, assy_output=assy.out, agp_output=create_agp.outcontigs,mapping_output=read_mapping_pairs.outcovfile
     }
 
+    meta {
+        author: "Chienchi Lo, B10, LANL"
+        email: "chienchi@lanl.gov"
+        version: "1.0.0"
+    }
+
 }
 
 task make_output{
@@ -47,9 +53,8 @@ task make_output{
  	}
 }
 
-#AWS_uswest2-optimal-ceq
 task read_mapping_pairs{
-    FArray[File] reads
+    Array[File] reads
     File ref
     String container
   
@@ -62,22 +67,17 @@ task read_mapping_pairs{
     String filename_bamscript="to_bam.sh"
     String filename_cov="covstats.txt"
     String dollar="$"
-    #runtime { backend: "JTM"}
-    runtime {
-	poolname: "aim2_assembly"
-        cluster: "cori"
-        time: "06:00:00"
-        cpu: 32
-        mem: "115GB"
-        node: 1
-        nwpn: 4
-    }
+     runtime {
+            docker: container
+            memory: "120 GiB"
+	    cpu:  16
+	    maxRetries: 1
+     }
     command{
-    	echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
+        echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
         touch ${filename_resources};
         curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &
         sleep 30
-
         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
         if [[ ${reads[0]}  == *.gz ]] ; then
@@ -88,19 +88,20 @@ task read_mapping_pairs{
              cat ${sep=" " reads} > infile.fastq
              export mapping_input="infile.fastq"
         fi
-        shifter --image=${container} -- bbmap.sh -Xmx105g threads=${dollar}(grep "model name" /proc/cpuinfo | wc -l) nodisk=true interleaved=true ambiguous=random in=$mapping_input ref=${ref} out=${filename_unsorted} covstats=${filename_cov} bamscript=${filename_bamscript}
-        shifter --image=${container} -- samtools sort -m100M -@ ${dollar}(grep "model name" /proc/cpuinfo | wc -l) ${filename_unsorted} -o ${filename_sorted}
-        shifter --image=${container} -- samtools index ${filename_sorted}
-        shifter --image=${container} -- reformat.sh -Xmx105g in=${filename_unsorted} out=${filename_outsam} overwrite=true
+        
+        bbmap.sh -Xmx105g threads=${dollar}(grep "model name" /proc/cpuinfo | wc -l) nodisk=true interleaved=true ambiguous=random in=$mapping_input ref=${ref} out=${filename_unsorted} covstats=${filename_cov} bamscript=${filename_bamscript}
+        samtools sort -m100M -@ ${dollar}(grep "model name" /proc/cpuinfo | wc -l) ${filename_unsorted} -o ${filename_sorted}
+        samtools index ${filename_sorted}
+        reformat.sh -Xmx105g in=${filename_unsorted} out=${filename_outsam} overwrite=true
         rm $mapping_input
-    }
-    output{
-        File outbamfile = filename_sorted
-        File outbamfileidx = filename_sorted_idx
-        File outcovfile = filename_cov
-        File outsamfile = filename_outsam
-        File outresources = filename_resources
-    }
+  }
+  output{
+      File outbamfile = filename_sorted
+      File outbamfileidx = filename_sorted_idx
+      File outcovfile = filename_cov
+      File outsamfile = filename_outsam
+      File outresources = filename_resources
+  }
 }
 
 task create_agp {
@@ -113,33 +114,28 @@ task create_agp {
     String filename_scaffolds="${prefix}_scaffolds.fna"
     String filename_agp="${prefix}.agp"
     String filename_legend="${prefix}_scaffolds.legend"
-    #runtime {backend: "JTM"}
-    runtime {
-        poolname: "aim2_assembly"
-        cluster: "cori"
-        time: "01:00:00"
-        cpu: 32
-        mem: "115GB"
-        node: 1
-        nwpn: 4
-    }
+     runtime {
+            docker: container
+            memory: "120 GiB"
+	    cpu:  16
+     }
     command{
-        echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
+	    echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
         touch ${filename_resources};
         curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &	
         sleep 30
-
-        shifter --image=${container} -- fungalrelease.sh -Xmx105g in=${scaffolds_in} out=${filename_scaffolds} outc=${filename_contigs} agp=${filename_agp} legend=${filename_legend} mincontig=200 minscaf=200 sortscaffolds=t sortcontigs=t overwrite=t
+        export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
+        fungalrelease.sh -Xmx105g in=${scaffolds_in} out=${filename_scaffolds} outc=${filename_contigs} agp=${filename_agp} legend=${filename_legend} mincontig=200 minscaf=200 sortscaffolds=t sortcontigs=t overwrite=t
         if [ "${rename_contig_prefix}" != "scaffold" ]; then
             sed -i 's/scaffold/${rename_contig_prefix}_scf/g' ${filename_contigs} ${filename_scaffolds} ${filename_agp} ${filename_legend}
         fi
     }
     output{
-        File outcontigs = filename_contigs
-        File outscaffolds = filename_scaffolds
-        File outagp = filename_agp
-        File outlegend = filename_legend
-        File outresources = filename_resources
+	File outcontigs = filename_contigs
+	File outscaffolds = filename_scaffolds
+	File outagp = filename_agp
+    	File outlegend = filename_legend
+    	File outresources = filename_resources
     }
 }
 
@@ -153,24 +149,20 @@ task assy {
      String filename_outfile="${outprefix}/scaffolds.fasta"
      String filename_spadeslog ="${outprefix}/spades.log"
      String dollar="$"
-     #runtime {backend: "JTM"}
      runtime {
-        poolname: "aim2_assembly"
-        cluster: "cori"
-        time: "10:00:00"
-        cpu: 32
-        mem: "115GB"
-        node: 1
-        nwpn: 4
+            docker: container
+            memory: "120 GiB"
+	    cpu:  16
      }
      command{
         echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
         touch ${filename_resources};
         curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &		
         sleep 30
-	    export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
+        export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
-        shifter --image=${container} -- spades.py --tmp-dir /tmp -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${dollar}(grep "model name" /proc/cpuinfo | wc -l) -1 ${infile1} -2 ${infile2}
+        
+        spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${dollar}(grep "model name" /proc/cpuinfo | wc -l) -1 ${infile1} -2 ${infile2}
      }
      output {
             File out = filename_outfile
@@ -193,15 +185,10 @@ task bbcms {
      String filename_kmerfile="unique31mer.txt"
      String filename_counts="counts.metadata.json"
      String dollar="$"
-     #runtime { backend: "JTM"}
      runtime {
-        poolname: "aim2_assembly"
-        cluster: "cori"
-        time: "06:00:00"
-        cpu: 32
-        mem: "115GB"
-        node: 1
-        nwpn: 4
+            docker: container
+            memory: "120 GiB"
+	    cpu:  16
      }
 
      command {
@@ -209,7 +196,6 @@ task bbcms {
         touch ${filename_resources};
         curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &		
         sleep 30
-
         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
         if [[ ${input_files[0]}  == *.gz ]] ; then
@@ -220,9 +206,9 @@ task bbcms {
              cat ${sep=" " input_files} > infile.fastq
              export bbcms_input="infile.fastq"
         fi
-        shifter --image=${container} -- bbcms.sh -Xmx105g  metadatafile=${filename_counts} mincount=2 highcountfraction=0.6 in=$bbcms_input out=${filename_outfile} > >(tee -a ${filename_outlog}) 2> >(tee -a ${filename_errlog} >&2) && grep Unique ${filename_errlog} | rev |  cut -f 1 | rev  > ${filename_kmerfile}
-        shifter --image=${container} -- reformat.sh -Xmx105g in=${filename_outfile} out1=${filename_outfile1} out2=${filename_outfile2}
-        shifter --image=${container} -- readlength.sh -Xmx105g in=${filename_outfile} out=${filename_readlen}
+        bbcms.sh -Xmx105g  metadatafile=${filename_counts} mincount=2 highcountfraction=0.6 in=$bbcms_input out=${filename_outfile} > >(tee -a ${filename_outlog}) 2> >(tee -a ${filename_errlog} >&2) && grep Unique ${filename_errlog} | rev |  cut -f 1 | rev  > ${filename_kmerfile}
+        reformat.sh -Xmx105g in=${filename_outfile} out1=${filename_outfile1} out2=${filename_outfile2}
+        readlength.sh -Xmx105g in=${filename_outfile} out=${filename_readlen}
         rm $bbcms_input
      }
      output {
@@ -237,3 +223,4 @@ task bbcms {
             File outresources = filename_resources
      }
 }
+

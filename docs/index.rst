@@ -131,17 +131,10 @@ Requirements for Execution
    
    kmercountmulti.sh -k=31 in=your.read.fq.gz
 
-Running Workflow in Cromwell on Cori
+Running Workflow in Cromwell in Cori
 ------------------------------------
-We provide three ways to run the workflow.
 
-1. CromwellJtmShifter/: The Cromwell run in head node send tasks to jtm-task-managers which will manages the tasks running on a computer node and using Shifter to run applications.
-
-2. SlurmCromwellShifter/: The submit script will request a node and launch the Cromwell. The Cromwell manages the workflow by using Shifter to run applications.
-
-3. CromwellSlurmShifter/: The Cromwell run in head node and manages the workflow by submitting each step of workflow to compute node where applications were ran by Shifter.
-
-Description of the files in each sub-directory:
+Description of the files:
 
 - .wdl file: the WDL file for workflow definition
 - .json file: the example input for the workflow

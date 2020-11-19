@@ -21,6 +21,25 @@ workflow jgi_meta {
     call make_output {
          input: outdir= outdir, bbcms_output=bbcms.out1, assy_output=assy.out, agp_output=create_agp.outcontigs,mapping_output=read_mapping_pairs.outcovfile
     }
+    output {
+	File final_contig = make_output.outcontigs
+	File final_scaffold = make_output.outscaffolds
+	File final_agp = make_output.outagp
+	File final_covstat = make_output.outcovstats
+	File final_samgz = make_output.outsamgz
+	File final_bam = make_output.outbam
+    }
+    parameter_meta{
+	input_file: "illumina paired-end interleaved fastq files"
+	outdir: "the final output directory path"
+	rename_contig_prefix: "contig prefix for fasta header, default: scaffold"
+	final_contig: "assembled contigs fasta file"
+	final_scaffold: "assembled scaffold fasta file"
+	final_agp: "assembled AGP file"
+	final_covstat: "contig coverage stats file"
+	final_samgz: "reads aligned to contigs sam file with gz compressed"
+	final_bam: "reads aligned to contigs bam file"
+    }
 
     meta {
         author: "Chienchi Lo, B10, LANL"
@@ -51,6 +70,18 @@ task make_output{
  			chmod 764 -R ${outdir}
  		fi
  	}
+	runtime {
+		memory: "1 GiB"
+		cpu:  1
+	}
+	output{
+		String outcontigs = "${outdir}/final_assembly/assembly_contigs.fasta"
+	        String outscaffolds = "${outdir}/final_assembly/assembly_scaffolds.fasta"
+      		String outagp = "${outdir}/final_assembly/assembly.agp"
+		String outbam = "${outdir}/mapping/pairedMapped_sorted.bam"
+		String outsamgz = "${outdir}/mapping/pairedMapped.sam.gz" 
+		String outcovstats = "${outdir}/mapping/covstats.txt"
+	}
 }
 
 task read_mapping_pairs{

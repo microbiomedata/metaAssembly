@@ -28,6 +28,7 @@ workflow jgi_meta {
 	File final_covstat = make_output.outcovstats
 	File final_samgz = make_output.outsamgz
 	File final_bam = make_output.outbam
+	File final_asmstat = make_output.outasmstats
     }
     parameter_meta{
 	input_file: "illumina paired-end interleaved fastq files"
@@ -39,6 +40,7 @@ workflow jgi_meta {
 	final_covstat: "contig coverage stats file"
 	final_samgz: "reads aligned to contigs sam file with gz compressed"
 	final_bam: "reads aligned to contigs bam file"
+	final_asmstat: "assembled scaffold/contigs statistical numbers"
     }
 
     meta {
@@ -81,6 +83,7 @@ task make_output{
 		String outbam = "${outdir}/mapping/pairedMapped_sorted.bam"
 		String outsamgz = "${outdir}/mapping/pairedMapped.sam.gz" 
 		String outcovstats = "${outdir}/mapping/covstats.txt"
+		String outasmstats = "${outdir}/final_assembly/stats.json"
 	}
 }
 
@@ -160,6 +163,7 @@ task create_agp {
         if [ "${rename_contig_prefix}" != "scaffold" ]; then
             sed -i 's/scaffold/${rename_contig_prefix}_scf/g' ${filename_contigs} ${filename_scaffolds} ${filename_agp} ${filename_legend}
         fi
+	bbstats.sh format=8 in=${filename_scaffolds} out=stats.json
     }
     output{
 	File outcontigs = filename_contigs

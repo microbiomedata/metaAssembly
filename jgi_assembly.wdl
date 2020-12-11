@@ -5,7 +5,6 @@ workflow jgi_meta {
     Float uniquekmer=1000
     String bbtools_container="microbiomedata/bbtools:38.44"
     String spades_container="microbiomedata/spades:3.13.0"
-    String basic_container="microbiomedata/bbtools:38.44"
     call bbcms {
           input: input_files=input_file, container=bbtools_container
     }

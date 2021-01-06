@@ -53,7 +53,7 @@ Below is a part list of all output files. The main assembly contigs output is in
 	│   ├── assembly_scaffolds.fasta
 	│   └── assembly_scaffolds.legend
 	├── mapping
-	│   ├── covstats.txt
+	│   ├── covstats.txt (mapping_stats.txt)
 	│   ├── pairedMapped.bam
 	│   ├── pairedMapped.sam.gz
 	│   ├── pairedMapped_sorted.bam

@@ -126,6 +126,7 @@ task read_mapping_pairs{
         samtools sort -m100M -@ ${dollar}(grep "model name" /proc/cpuinfo | wc -l) ${filename_unsorted} -o ${filename_sorted}
         samtools index ${filename_sorted}
         reformat.sh -Xmx105g in=${filename_unsorted} out=${filename_outsam} overwrite=true
+	ln ${filename_cov} mapping_stats.txt
         rm $mapping_input
   }
   output{

@@ -58,9 +58,9 @@ Inputs
 .. code-block:: JSON
 
 	{
-	  "jgi_meta.input_file":["/path/to/SRR7877884.fastq.gz"],
-	  "jgi_meta.rename_contig_prefix":"SRR7877884",
-	  "jgi_meta.outdir":"/path/to/SRR7877884_assembly"
+	  "jgi_metaASM.input_file":["/path/to/SRR7877884.fastq.gz"],
+	  "jgi_metaASM.rename_contig_prefix":"SRR7877884",
+	  "jgi_metaASM.outdir":"/path/to/SRR7877884_assembly"
 	}
 
 * The json file includes three parts: 
@@ -70,6 +70,10 @@ Inputs
     2. contig prefix for fasta header
     
     3. output path
+
+    4. memory (optional) ex: "jgi_metaASM.memory": "105G"
+
+    5. threads (optional) ex: "jgi_metaASM.threads": "16"
     
 .. note::
     

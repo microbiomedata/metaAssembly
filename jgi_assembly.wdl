@@ -1,4 +1,4 @@
-workflow jgi_meta {
+workflow jgi_metaASM {
     Array[File] input_file
     String? outdir
     String? memory

@@ -40,6 +40,7 @@ Test datasets
 -------------
 
 Zymobiomics mock-community DNA control `(SRR7877884) <https://www.ebi.ac.uk/ena/browser/view/SRR7877884>`_
+`10% subsampling SRR7877884-int-0.1.fastq.gz <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884-int-0.1.fastq.gz>`_ 
 
 Details
 -------
@@ -60,7 +61,9 @@ Inputs
 	{
 	  "jgi_metaASM.input_file":["/path/to/SRR7877884.fastq.gz"],
 	  "jgi_metaASM.rename_contig_prefix":"SRR7877884",
-	  "jgi_metaASM.outdir":"/path/to/SRR7877884_assembly"
+	  "jgi_metaASM.outdir":"/path/to/SRR7877884_assembly",
+          "jgi_metaASM.memory": "105G",
+          "jgi_metaASM.threads": "16"
 	}
 
 * The json file includes three parts: 

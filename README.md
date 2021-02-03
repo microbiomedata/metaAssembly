@@ -34,7 +34,9 @@ Description of the files:
 {
   "jgi_metaASM.input_file":["/global/cfs/projectdirs/m3408/ficus/11809.7.220839.TCCTGAG-ACTGCAT.fastq.gz"],
   "jgi_metaASM.rename_contig_prefix":"503125_160870",
-  "jgi_metaASM.outdir":"/global/cfs/projectdirs/m3408/aim2/metagenome/assembly/ficus/503125_160870"
+  "jgi_metaASM.outdir":"/global/cfs/projectdirs/m3408/aim2/metagenome/assembly/ficus/503125_160870",
+  "jgi_metaASM.memory": "105G",
+  "jgi_metaASM.threads": "16"
 }
 ```
 

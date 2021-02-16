@@ -5,7 +5,7 @@ workflow jgi_metaASM {
     String? threads
     String rename_contig_prefix="scaffold"
     Float uniquekmer=1000
-    String bbtools_container="microbiomedata/bbtools:38.44"
+    String bbtools_container="microbiomedata/bbtools:38.90"
     String spades_container="microbiomedata/spades:3.15.0"
     call bbcms {
           input: input_files=input_file, container=bbtools_container, memory=memory

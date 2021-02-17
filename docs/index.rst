@@ -126,81 +126,82 @@ Part of an example output JSON file is shown below::
             └── scaffolds.paths
 
 The table provides all of the output directories, files, and their descriptions.
-===================================== ================================= ===============================================================
-Directory                             File Name                         Description
-===================================== ================================= ===============================================================
-bbcms                                                                   Error correction result directory 
-  --berkeleylab-jgi-meta-60ade422cd4e                                   directory containing checking resource script
-                                      counts.metadata.json              bbcms commands and summary statistics in JSON format
-                                      input.corr.fastq.gz               error corrected reads in interleaved format.
-                                      input.corr.left.fastq.gz          error corrected forward reads 
-                                      input.corr.right.fastq.gz         error corrected reverse reads 
-                                      rc                                cromwell script sbumit return code
-                                      readlen.txt                       error corrected reads statistics
-                                      resources.log                     resource checking log
-                                      script                            Task run commands
-                                      script.background                 Bash script to run script.submit
-                                      script.submit                     cromwell submit commands
-                                      stderr                            standard error where task writes error message to
-                                      stderr.background                 standard error where bash script writes error message to
-                                      stderr.log                        standard error from bbcms command
-                                      stdout                            standard output where task writes error message to
-                                      stdout.background                 standard output where bash script writes error message(s)
-                                      stdout.log                        standard output from bbcms command
-                                      unique31mer.txt                   the count of unique kmer, K=31
-spades3                                                                 metaSPAdes assembly result directory
-  --K33                                                                 directory containing intermediate files from the run with K=33
-  --K55                                                                 directory containing intermediate files from the run with K=55
-  --K77                                                                 directory containing intermediate files from the run with K=77
-  --K99                                                                 directory containing intermediate files from the run with K=99
-  --K127                                                                directory containing intermediate files from the run with K=127
-  --misc                                                                directory containing miscellaneous files
-  --tmp                                                                 directory for temp files
-                                      assembly_graph.fastg              metaSPAdes assembly graph in FASTG format
-                                      assembly_graph_with_scaffolds.gfa metaSPAdes assembly graph and scaffolds paths in GFA 1.0 format
-                                      before_rr.fasta                   contigs before repeat resolution
-                                      contigs.fasta                     metaSPAdes resulting contigs
-                                      contigs.paths                     paths in the assembly graph corresponding to contigs.fasta
-                                      dataset.info                      internal configuration file
-                                      first_pe_contigs.fasta            preliminary contigs of iterative kmers assembly
-                                      input_dataset.yaml                internal YAML data set file
-                                      params.txt                        information about SPAdes parameters in this run
-                                      scaffolds.fasta                   metaSPAdes resulting scaffolds
-                                      scaffolds.paths                   paths in the assembly graph corresponding to scaffolds.fasta
-                                      spades.log                        metaSPAdes log
-final_assembly                                                          create_agp task result directory
-  --berkeleylab-jgi-meta-60ade422cd4e                                   directory containing checking resource script
-                                      assembly.agp                      an AGP format file describes the assembly
-                                      assembly_contigs.fna              Final assembly contig fasta
-                                      assembly_scaffolds.fna            Final assembly scaffolds fasta
-                                      assembly_scaffolds.legend         name mapping file from spades node name to new name
-                                      rc                                cromwell script sbumit return code
-                                      resources.log                     resource checking log
-                                      script                            Task run commands
-                                      script.background                 Bash script to run script.submit
-                                      script.submit                     cromwell submit commands
-                                      stats.json                        assembly statistics in json format
-                                      stderr                            standard error where task writes error message to
-                                      stderr.background                 standard error where bash script writes error message to
-                                      stdout                            standard output where task writes error message to
-                                      stdout.background                 standard output where bash script writes error message to
-mapping                                                                 maps reads back to the final assembly result directory
-                                      covstats.txt                      contigs coverage informaiton 
-                                      mapping_stats.txt                 contigs coverage informaiton (same as covstats.txt)
-                                      pairedMapped.bam                  reads mapping back to the final assembly bam file
-                                      pairedMapped.sam.gz               reads mapping back to the final assembly sam.gz file
-                                      pairedMapped_sorted.bam           reads mapping back to the final assembly sorted bam file
-                                      pairedMapped_sorted.bam.bai       reads mapping back to the final assembly sorted bam index file
-                                      rc                                cromwell script sbumit return code
-                                      resources.log                     resource checking log
-                                      script                            Task run commands
-                                      script.background                 Bash script to run script.submit
-                                      script.submit                     cromwell submit commands
-                                      stderr                            standard error where task writes error message to
-                                      stderr.background                 standard error where bash script writes error message to
-                                      stdout                            standard output where task writes error message to
-                                      stdout.background                 standard output where bash script writes error message to
-===================================== ================================= ===============================================================
+
+=================================================== ================================= ===============================================================
+Directory                                           File Name                         Description
+=================================================== ================================= ===============================================================
+**bbcms**                                                                             Error correction result directory 
+bbcms/berkeleylab-jgi-meta-60ade422cd4e                                               directory containing checking resource script
+bbcms/                                              counts.metadata.json              bbcms commands and summary statistics in JSON format
+bbcms/                                              input.corr.fastq.gz               error corrected reads in interleaved format.
+bbcms/                                              input.corr.left.fastq.gz          error corrected forward reads 
+bbcms/                                              input.corr.right.fastq.gz         error corrected reverse reads 
+bbcms/                                              rc                                cromwell script sbumit return code
+bbcms/                                              readlen.txt                       error corrected reads statistics
+bbcms/                                              resources.log                     resource checking log
+bbcms/                                              script                            Task run commands
+bbcms/                                              script.background                 Bash script to run script.submit
+bbcms/                                              script.submit                     cromwell submit commands
+bbcms/                                              stderr                            standard error where task writes error message to
+bbcms/                                              stderr.background                 standard error where bash script writes error message to
+bbcms/                                              stderr.log                        standard error from bbcms command
+bbcms/                                              stdout                            standard output where task writes error message to
+bbcms/                                              stdout.background                 standard output where bash script writes error message(s)
+bbcms/                                              stdout.log                        standard output from bbcms command
+bbcms/                                              unique31mer.txt                   the count of unique kmer, K=31
+**spades3**                                                                           metaSPAdes assembly result directory
+spades3/K33                                                                           directory containing intermediate files from the run with K=33
+spades3/K55                                                                           directory containing intermediate files from the run with K=55
+spades3/K77                                                                           directory containing intermediate files from the run with K=77
+spades3/K99                                                                           directory containing intermediate files from the run with K=99
+spades3/K127                                                                          directory containing intermediate files from the run with K=127
+spades3/misc                                                                          directory containing miscellaneous files
+spades3/tmp                                                                           directory for temp files
+spades3/                                            assembly_graph.fastg              metaSPAdes assembly graph in FASTG format
+spades3/                                            assembly_graph_with_scaffolds.gfa metaSPAdes assembly graph and scaffolds paths in GFA 1.0 format
+spades3/                                            before_rr.fasta                   contigs before repeat resolution
+spades3/                                            contigs.fasta                     metaSPAdes resulting contigs
+spades3/                                            contigs.paths                     paths in the assembly graph corresponding to contigs.fasta
+spades3/                                            dataset.info                      internal configuration file
+spades3/                                            first_pe_contigs.fasta            preliminary contigs of iterative kmers assembly
+spades3/                                            input_dataset.yaml                internal YAML data set file
+spades3/                                            params.txt                        information about SPAdes parameters in this run
+spades3/                                            scaffolds.fasta                   metaSPAdes resulting scaffolds
+spades3/                                            scaffolds.paths                   paths in the assembly graph corresponding to scaffolds.fasta
+spades3/                                            spades.log                        metaSPAdes log
+**final_assembly**                                                                    create_agp task result directory
+final_assembly/berkeleylab-jgi-meta-60ade422cd4e                                      directory containing checking resource script
+final_assembly/                                     assembly.agp                      an AGP format file describes the assembly
+final_assembly/                                     assembly_contigs.fna              Final assembly contig fasta
+final_assembly/                                     assembly_scaffolds.fna            Final assembly scaffolds fasta
+final_assembly/                                     assembly_scaffolds.legend         name mapping file from spades node name to new name
+final_assembly/                                     rc                                cromwell script sbumit return code
+final_assembly/                                     resources.log                     resource checking log
+final_assembly/                                     script                            Task run commands
+final_assembly/                                     script.background                 Bash script to run script.submit
+final_assembly/                                     script.submit                     cromwell submit commands
+final_assembly/                                     stats.json                        assembly statistics in json format
+final_assembly/                                     stderr                            standard error where task writes error message to
+final_assembly/                                     stderr.background                 standard error where bash script writes error message to
+final_assembly/                                     stdout                            standard output where task writes error message to
+final_assembly/                                     stdout.background                 standard output where bash script writes error message to
+**mapping**                                                                           maps reads back to the final assembly result directory
+mapping/                                            covstats.txt                      contigs coverage informaiton 
+mapping/                                            mapping_stats.txt                 contigs coverage informaiton (same as covstats.txt)
+mapping/                                            pairedMapped.bam                  reads mapping back to the final assembly bam file
+mapping/                                            pairedMapped.sam.gz               reads mapping back to the final assembly sam.gz file
+mapping/                                            pairedMapped_sorted.bam           reads mapping back to the final assembly sorted bam file
+mapping/                                            pairedMapped_sorted.bam.bai       reads mapping back to the final assembly sorted bam index file
+mapping/                                            rc                                cromwell script sbumit return code
+mapping/                                            resources.log                     resource checking log
+mapping/                                            script                            Task run commands
+mapping/                                            script.background                 Bash script to run script.submit
+mapping/                                            script.submit                     cromwell submit commands
+mapping/                                            stderr                            standard error where task writes error message to
+mapping/                                            stderr.background                 standard error where bash script writes error message to
+mapping/                                            stdout                            standard output where task writes error message to
+mapping/                                            stdout.background                 standard output where bash script writes error message to
+=================================================== ================================= ===============================================================
 
 Version History
 ---------------

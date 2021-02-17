@@ -126,9 +126,9 @@ Part of an example output JSON file is shown below::
             └── scaffolds.paths
 
 The table provides all of the output directories, files, and their descriptions.
-===================================== ================================= ========================================================
+===================================== ================================= ===============================================================
 Directory                             File Name                         Description
-===================================== ================================= ========================================================
+===================================== ================================= ===============================================================
 bbcms                                                                   Error correction result directory 
   --berkeleylab-jgi-meta-60ade422cd4e                                   directory containing checking resource script
                                       counts.metadata.json              bbcms commands and summary statistics in JSON format
@@ -200,6 +200,7 @@ mapping                                                                 maps rea
                                       stderr.background                 standard error where bash script writes error message to
                                       stdout                            standard output where task writes error message to
                                       stdout.background                 standard output where bash script writes error message to
+===================================== ================================= ===============================================================
 
 Version History
 ---------------

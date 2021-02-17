@@ -1,160 +1,214 @@
-The Metagenome Assembly Workflow
-================================
-
-Summary
--------
-This workflow is developed by Brian Foster at JGI and original from his `repo <https://gitlab.com/bfoster1/wf_templates/tree/master/templates>`_. It take paired-end reads runs error correction by bbcms (BBTools). The clean reads are assembled by MetaSpades. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information.
-
-
-Workflow Diagram
-------------------
+The Metagenome Assembly Workflow, v1.0.1
+========================================
 
 .. image:: workflow_assembly.png
    :scale: 60%
    :alt: Metagenome assembly workflow dependencies
+   
+Workflow Overview
+-----------------
 
-Workflow Dependencies
----------------------
-Third party software
-~~~~~~~~~~~~~~~~~~~~
+This workflow takes in paired-end Illumina reads in interleaved format and performs error correction, then reformats the interleaved file into two FASTQ files for downstream tasks using bbcms (BBTools). The corrected reads are assembled using metaSPAdes. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information. The .wdl (Workflow Description Language) file includes five tasks, *bbcms*, *assy*, *create_agp*, *read_mapping_pairs*, and *make_output*.
 
-- MetaSPades v3.13.0 (GPLv2)
-- BBTools:38.44 `(BSD-3-Clause-LBNL) <https://bitbucket.org/berkeleylab/jgi-bbtools/src/master/license.txt>`_
-
-Database
-~~~~~~~~
-- None
+1. The *bbcms* task takes in interleaved FASTQ inputs and performs error correction and reformats the interleaved fastq into two output FASTQ files for paired-end reads for the next tasks. 
+2. The *assy* task performs metaSPAdes assembly
+3. Contigs and Scaffolds (output of metaSPAdes) are consumed by the *create_agp* task to rename the FASTA header and generate an `AGP format <https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/>`_ which describes the assembly
+4. The *read_mapping_pairs* task maps reads back to the final assembly to generate coverage information.
+5. The final *make_output* task adds all output files into the specified directory.
 
 Workflow Availability
 ---------------------
-The workflow is available in GitHub:
-https://github.com/microbiomedata/metaAssembly
 
-The container is available at Docker Hub (microbiomedata):
-
-https://hub.docker.com/r/microbiomedata/spades
-
-https://hub.docker.com/r/microbiomedata/bbtools
-
-Test datasets
--------------
-
-Zymobiomics mock-community DNA control `(SRR7877884) <https://www.ebi.ac.uk/ena/browser/view/SRR7877884>`_
-`10% subsampling SRR7877884-int-0.1.fastq.gz <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884-int-0.1.fastq.gz>`_ 
-
-Details
--------
-
-The .wdl (Workflow Description Language) file includes five tasks, `bbcms`, `assy`, `create_agp`, `read_mapping_pairs`, and `make_output`. 
-
-The `bbcms` tasks takes interleaved fastq inputs and perform error correction, reformat interleaved fastq into two output fastq files for paired-end reqads for next tasks. 
-The `assy` task performs metaSPAdes assembly. 
-Contigs and Scaffolds output of metaSPAdes are consumed by `create_agp` task to rename the fasta header and generate `AGP <https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/>`_ format which describes the assembly. 
-The `read_mapping_pairs` task maps reads back to the final assembly and generated coverage information.
-The final `make_output` task will pop all above output files into specified directory.
-
-Inputs
-~~~~~~
-
-.. code-block:: JSON
-
-	{
-	  "jgi_metaASM.input_file":["/path/to/SRR7877884.fastq.gz"],
-	  "jgi_metaASM.rename_contig_prefix":"SRR7877884",
-	  "jgi_metaASM.outdir":"/path/to/SRR7877884_assembly",
-          "jgi_metaASM.memory": "105G",
-          "jgi_metaASM.threads": "16"
-	}
-
-* The json file includes three parts: 
-
-    1. fastq (illumina paired-end interleaved fastq)
-    
-    2. contig prefix for fasta header
-    
-    3. output path
-
-    4. memory (optional) ex: "jgi_metaASM.memory": "105G"
-
-    5. threads (optional) ex: "jgi_metaASM.threads": "16"
-    
-.. note::
-    
-    If the input is paired-end fastq file, it should be in interleaved format. Below is command use the SRR7877884 as example to convert the paired-end reads in two files into one interleaved format fastq file.
-    
-.. code-block:: bash    
-    
-    paste <(zcat SRR7877884_1.fastq.gz | paste - - - -) <(zcat SRR7877884_2.fastq.gz | paste - - - -) | tr '\t' '\n' | gzip -c > SRR7877884-int.fastq.gz
-
-
-
-Outputs
-~~~~~~~
-
-The output will have four sub-directories, bbcms, final_assembly, mapping and spades3. The main assembly contigs output is in final_assembly/assembly.contigs.fasta.
-
-Below is a part list of all output files:: 
-
-	├── bbcms
-	│   ├── berkeleylab-jgi-meta-60ade422cd4e
-	│   ├── counts.metadata.json
-	│   ├── input.corr.fastq.gz
-	│   ├── input.corr.left.fastq.gz
-	│   ├── input.corr.right.fastq.gz
-	│   ├── readlen.txt
-	│   └── unique31mer.txt
-	├── final_assembly
-	│   ├── assembly.agp
-	│   ├── assembly_contigs.fasta
-	│   ├── assembly_scaffolds.fasta
-	│   └── assembly_scaffolds.legend
-	├── mapping
-	│   ├── covstats.txt (mapping_stats.txt)
-	│   ├── pairedMapped.bam
-	│   ├── pairedMapped.sam.gz
-	│   ├── pairedMapped_sorted.bam
-	│   └── pairedMapped_sorted.bam.bai
-	└── spades3
-		├── assembly_graph.fastg
-		├── assembly_graph_with_scaffolds.gfa
-		├── contigs.fasta
-		├── contigs.paths
-		├── scaffolds.fasta
-		└── scaffolds.paths
-
+The workflow from GitHub uses all the listed docker images to run all third-party tools.
+The workflow is available in GitHub: https://github.com/microbiomedata/metaAssembly; the corresponding Docker images are available in DockerHub: https://hub.docker.com/r/microbiomedata/spades and https://hub.docker.com/r/microbiomedata/bbtools
 
 Requirements for Execution
 --------------------------
 
-- Docker or other Container Runtime
-- Cromwell or other WDL-capable Workflow Execution Tool
-- The memory requirement depends on the input complexity. Here is a simple estimation equation based on kmers.
-  
-  predicted_mem = (kmers * 2.962e-08 + 1.630e+01) * 1.1 (in GB)
-  
-.. note::     
+(recommendations are in **bold**)  
 
-   `kmers` variable can get from `kmercountmulti.sh` script from BBTools.
-   
-   kmercountmulti.sh -k=31 in=your.read.fq.gz
+- WDL-capable Workflow Execution Tool (**Cromwell**)
+- Container Runtime that can load Docker images (**Docker v2.1.0.3 or higher**) 
 
-Running Workflow in Cromwell in Cori
-------------------------------------
+Hardware Requirements
+---------------------
 
-Description of the files:
+- Memory: >40 GB RAM
 
-- .wdl file: the WDL file for workflow definition
-- .json file: the example input for the workflow
-- .conf file: the conf file for running Cromwell.
-- .sh file: the shell script for running the example workflow
-	
+The memory requirement depends on the input complexity. Here is a simple estimation equation for the memory required based on kmers in the input file::
+
+    predicted_mem = (kmers * 2.962e-08 + 1.630e+01) * 1.1 (in GB)
+
+.. note::
+    
+    The kmers variable for the equation above can be obtained using the kmercountmulti.sh script from BBTools.
+
+    kmercountmulti.sh -k=31 in=your.read.fq.gz
+
+
+Workflow Dependencies
+---------------------
+
+- Third party software:  (This is included in the Docker image.)  
+
+    - `metaSPades v3.15.0 <https://cab.spbu.ru/software/spades/>`_ (License: `GPLv2 <https://github.com/ablab/spades/blob/spades_3.15.0/assembler/GPLv2.txt>`_)
+    - `BBTools:38.90 <https://jgi.doe.gov/data-and-tools/bbtools/>`_ (License: `BSD-3-Clause-LBNL <https://bitbucket.org/berkeleylab/jgi-bbtools/src/master/license.txt>`_)
+
+Sample dataset(s)
+-----------------
+
+Zymobiomics mock-community DNA control (SRR7877884); this dataset is ~4 GB.
+
+.. note::
+
+    If the input data is paired-end data, it must be in interleaved format. The following command will interleave the files, using the above dataset as an example:
+
+.. code-block:: bash   
+
+    paste <(zcat SRR7877884_1.fastq.gz | paste - - - -) <(zcat SRR7877884_2.fastq.gz | paste - - - -) | tr '\t' '\n' | gzip -c > SRR7877884-int.fastq.gz
+
+For testing purposes and for the following examples, we used a 10% sub-sampling of the above dataset: (`SRR7877884-int-0.1.fastq.gz <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884-int-0.1.fastq.gz>`_). This dataset is already interleaved. 
+
+
+Input
+-----
+
+A JSON file containing the following information:
+
+1. the path to the input FASTQ file (Illumina paired-end interleaved FASTQ) (recommended the output of the Reads QC workflow.)
+2. the contig prefix for the FASTA header
+3. the output path
+4. memory (optional) ex: “jgi_metaASM.memory”: “105G”
+5. threads (optional) ex: “jgi_metaASM.threads”: “16”
+
+An example input JSON file is shown below::
+
+    {
+        "jgi_metaASM.input_file":["/path/to/SRR7877884-int-0.1.fastq.gz "],
+        "jgi_metaASM.rename_contig_prefix":"projectID",
+        "jgi_metaASM.outdir":"/path/to/ SRR7877884-int-0.1_assembly",
+        "jgi_metaASM.memory": "105G",
+        "jgi_metaASM.threads": "16"
+    }
+
+Output
+------
+
+The output directory will contain four output sub-directories: bbcms, final_assembly, mapping and spades3. The main output, the assembled contigs, are in final_assembly/assembly.contigs.fasta.
+
+Part of an example output JSON file is shown below::
+
+    ├── bbcms
+    │   ├── berkeleylab-jgi-meta-60ade422cd4e
+    │   ├── counts.metadata.json
+    │   ├── input.corr.fastq.gz
+    │   ├── input.corr.left.fastq.gz
+    │   ├── input.corr.right.fastq.gz
+    │   ├── readlen.txt
+    │   └── unique31mer.txt
+    ├── final_assembly
+    │   ├── assembly.agp
+    │   ├── assembly_contigs.fasta
+    │   ├── assembly_scaffolds.fasta
+    │   └── assembly_scaffolds.legend
+    ├── mapping
+    │   ├── covstats.txt (mapping_stats.txt)
+    │   ├── pairedMapped.bam
+    │   ├── pairedMapped.sam.gz
+    │   ├── pairedMapped_sorted.bam
+    │   └── pairedMapped_sorted.bam.bai
+    └── spades3
+            ├── assembly_graph.fastg
+            ├── assembly_graph_with_scaffolds.gfa
+            ├── contigs.fasta
+            ├── contigs.paths
+            ├── scaffolds.fasta
+            └── scaffolds.paths
+
+The table provides all of the output directories, files, and their descriptions.
+===================================== ================================= ========================================================
+Directory                             File Name                         Description
+===================================== ================================= ========================================================
+bbcms                                                                   Error correction result directory 
+  --berkeleylab-jgi-meta-60ade422cd4e                                   directory containing checking resource script
+                                      counts.metadata.json              bbcms commands and summary statistics in JSON format
+                                      input.corr.fastq.gz               error corrected reads in interleaved format.
+                                      input.corr.left.fastq.gz          error corrected forward reads 
+                                      input.corr.right.fastq.gz         error corrected reverse reads 
+                                      rc                                cromwell script sbumit return code
+                                      readlen.txt                       error corrected reads statistics
+                                      resources.log                     resource checking log
+                                      script                            Task run commands
+                                      script.background                 Bash script to run script.submit
+                                      script.submit                     cromwell submit commands
+                                      stderr                            standard error where task writes error message to
+                                      stderr.background                 standard error where bash script writes error message to
+                                      stderr.log                        standard error from bbcms command
+                                      stdout                            standard output where task writes error message to
+                                      stdout.background                 standard output where bash script writes error message(s)
+                                      stdout.log                        standard output from bbcms command
+                                      unique31mer.txt                   the count of unique kmer, K=31
+spades3                                                                 metaSPAdes assembly result directory
+  --K33                                                                 directory containing intermediate files from the run with K=33
+  --K55                                                                 directory containing intermediate files from the run with K=55
+  --K77                                                                 directory containing intermediate files from the run with K=77
+  --K99                                                                 directory containing intermediate files from the run with K=99
+  --K127                                                                directory containing intermediate files from the run with K=127
+  --misc                                                                directory containing miscellaneous files
+  --tmp                                                                 directory for temp files
+                                      assembly_graph.fastg              metaSPAdes assembly graph in FASTG format
+                                      assembly_graph_with_scaffolds.gfa metaSPAdes assembly graph and scaffolds paths in GFA 1.0 format
+                                      before_rr.fasta                   contigs before repeat resolution
+                                      contigs.fasta                     metaSPAdes resulting contigs
+                                      contigs.paths                     paths in the assembly graph corresponding to contigs.fasta
+                                      dataset.info                      internal configuration file
+                                      first_pe_contigs.fasta            preliminary contigs of iterative kmers assembly
+                                      input_dataset.yaml                internal YAML data set file
+                                      params.txt                        information about SPAdes parameters in this run
+                                      scaffolds.fasta                   metaSPAdes resulting scaffolds
+                                      scaffolds.paths                   paths in the assembly graph corresponding to scaffolds.fasta
+                                      spades.log                        metaSPAdes log
+final_assembly                                                          create_agp task result directory
+  --berkeleylab-jgi-meta-60ade422cd4e                                   directory containing checking resource script
+                                      assembly.agp                      an AGP format file describes the assembly
+                                      assembly_contigs.fna              Final assembly contig fasta
+                                      assembly_scaffolds.fna            Final assembly scaffolds fasta
+                                      assembly_scaffolds.legend         name mapping file from spades node name to new name
+                                      rc                                cromwell script sbumit return code
+                                      resources.log                     resource checking log
+                                      script                            Task run commands
+                                      script.background                 Bash script to run script.submit
+                                      script.submit                     cromwell submit commands
+                                      stats.json                        assembly statistics in json format
+                                      stderr                            standard error where task writes error message to
+                                      stderr.background                 standard error where bash script writes error message to
+                                      stdout                            standard output where task writes error message to
+                                      stdout.background                 standard output where bash script writes error message to
+mapping                                                                 maps reads back to the final assembly result directory
+                                      covstats.txt                      contigs coverage informaiton 
+                                      mapping_stats.txt                 contigs coverage informaiton (same as covstats.txt)
+                                      pairedMapped.bam                  reads mapping back to the final assembly bam file
+                                      pairedMapped.sam.gz               reads mapping back to the final assembly sam.gz file
+                                      pairedMapped_sorted.bam           reads mapping back to the final assembly sorted bam file
+                                      pairedMapped_sorted.bam.bai       reads mapping back to the final assembly sorted bam index file
+                                      rc                                cromwell script sbumit return code
+                                      resources.log                     resource checking log
+                                      script                            Task run commands
+                                      script.background                 Bash script to run script.submit
+                                      script.submit                     cromwell submit commands
+                                      stderr                            standard error where task writes error message to
+                                      stderr.background                 standard error where bash script writes error message to
+                                      stdout                            standard output where task writes error message to
+                                      stdout.background                 standard output where bash script writes error message to
 
 Version History
 ---------------
-- 1.0.0
+
+- 1.0.1 (release date **02/16/2021**; previous versions: 1.0.0)
 
 Point of contact
 ----------------
-Original author: Brian Foster <bfoster@lbl.gov>
 
-Package maintainer: Chienchi Lo <chienchi@lanl.gov>
+- Original author: Brian Foster <bfoster@lbl.gov>
+
+- Package maintainer: Chienchi Lo <chienchi@lanl.gov>

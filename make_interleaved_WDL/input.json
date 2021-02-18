@@ -1,0 +1,7 @@
+{
+	"make_interleaved_reads.input_files":[
+		"/path/to/Forward.fastq.gz",
+		"/path/to/Reverse.fastq.gz"
+	],
+	"make_interleaved_reads.output_file": "/path/to/interleaved.fastq.gz"
+}

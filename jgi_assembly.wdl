@@ -242,11 +242,11 @@ task bbcms {
         sleep 30
         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
-        if [[ ${input_files[0]}  == *.gz ]] ; then
+        if file --mime -b ${input_files[0]} | grep gzip; then 
              cat ${sep=" " input_files} > infile.fastq.gz
              export bbcms_input="infile.fastq.gz"
         fi
-        if [[ ${input_files[0]}  == *.fastq ]] ; then
+	if file --mime -b ${input_files[0]} | grep plain; then
              cat ${sep=" " input_files} > infile.fastq
              export bbcms_input="infile.fastq"
         fi

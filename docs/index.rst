@@ -1,4 +1,4 @@
-The Metagenome Assembly Workflow, v1.0.1
+The Metagenome Assembly Workflow (v1.0.1)
 ========================================
 
 .. image:: workflow_assembly.png

@@ -55,8 +55,8 @@ Below is a part list of all output files. The main assembly contigs output is in
 	│   └── unique31mer.txt
 	├── final_assembly
 	│   ├── assembly.agp
-	│   ├── assembly_contigs.fasta
-	│   ├── assembly_scaffolds.fasta
+	│   ├── assembly_contigs.fna
+	│   ├── assembly_scaffolds.fna
 	│   └── assembly_scaffolds.legend
 	├── mapping
 	│   ├── covstats.txt (mapping_stats.txt)

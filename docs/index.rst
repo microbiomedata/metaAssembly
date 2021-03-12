@@ -1,4 +1,4 @@
-Metagenome Assembly Workflow (v1.0.1)
+Metagenome Assembly Workflow (v1.0.2)
 ========================================
 
 .. image:: workflow_assembly.png
@@ -109,8 +109,8 @@ Part of an example output JSON file is shown below::
     │   └── unique31mer.txt
     ├── final_assembly
     │   ├── assembly.agp
-    │   ├── assembly_contigs.fasta
-    │   ├── assembly_scaffolds.fasta
+    │   ├── assembly_contigs.fna
+    │   ├── assembly_scaffolds.fna
     │   └── assembly_scaffolds.legend
     ├── mapping
     │   ├── covstats.txt (mapping_stats.txt)
@@ -207,7 +207,7 @@ mapping/                                            stdout.background           
 Version History
 ---------------
 
-- 1.0.1 (release date **02/16/2021**; previous versions: 1.0.0)
+- 1.0.2 (release date **03/12/2021**; previous versions: 1.0.1)
 
 Point of contact
 ----------------

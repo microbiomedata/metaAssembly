@@ -80,8 +80,8 @@ task make_output{
 		cpu:  1
 	}
 	output{
-		String outcontigs = "${outdir}/final_assembly/assembly_contigs.fasta"
-	        String outscaffolds = "${outdir}/final_assembly/assembly_scaffolds.fasta"
+		String outcontigs = "${outdir}/final_assembly/assembly_contigs.fna"
+	        String outscaffolds = "${outdir}/final_assembly/assembly_scaffolds.fna"
       		String outagp = "${outdir}/final_assembly/assembly.agp"
 		String outbam = "${outdir}/mapping/pairedMapped_sorted.bam"
 		String outsamgz = "${outdir}/mapping/pairedMapped.sam.gz" 

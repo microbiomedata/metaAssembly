@@ -58,7 +58,11 @@ Third party software:  (This is included in the Docker image.)
 Sample dataset(s)
 -----------------
 
-Zymobiomics mock-community DNA control (SRR7877884); this dataset is ~4 GB.
+- small dataset: `Ecoli 10x (287M) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_small_test_data.tgz>`_ . You can find input/output in the downloaded tar gz file.
+
+- large dataset: `Zymobiomics mock-community DNA control (22G) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_large_test_data.tgz>`_ .  You can find input/output in the downloaded tar gz file.
+
+Zymobiomics mock-community DNA control (`SRR7877884 <https://www.ebi.ac.uk/ena/browser/view/SRR7877884>`_); this original dataset is ~4 GB.
 
 .. note::
 

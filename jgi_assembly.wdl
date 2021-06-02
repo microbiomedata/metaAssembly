@@ -19,17 +19,34 @@ workflow jgi_metaASM {
     call read_mapping_pairs {
          input: reads=input_file, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads
     }
-    call make_output {
-         input: outdir= outdir, bbcms_output=bbcms.out1, assy_output=assy.out, agp_output=create_agp.outcontigs,mapping_output=read_mapping_pairs.outcovfile
+    if (defined(outdir)) {
+        call make_output {
+             input: outdir=outdir,
+                    contigs=create_agp.outcontigs,
+                    scaffolds=create_agp.outscaffolds,
+                    agp=create_agp.outagp,
+                    bam=read_mapping_pairs.outbamfile,
+                    samgz=read_mapping_pairs.outsamfile,
+                    covstats=read_mapping_pairs.outcovfile,
+                    asmstats=create_agp.outstats,
+                    container=bbtools_container
+        }
     }
     output {
-	File final_contig = make_output.outcontigs
-	File final_scaffold = make_output.outscaffolds
-	File final_agp = make_output.outagp
-	File final_covstat = make_output.outcovstats
-	File final_samgz = make_output.outsamgz
-	File final_bam = make_output.outbam
-	File final_asmstat = make_output.outasmstats
+        File contig = create_agp.outcontigs
+        File scaffold = create_agp.outscaffolds
+        File agp=create_agp.outagp
+        File bam=read_mapping_pairs.outbamfile
+        File samgz=read_mapping_pairs.outsamfile
+        File covstats=read_mapping_pairs.outcovfile
+        File asmstats=create_agp.outstats
+        File? final_contig = make_output.outcontigs
+        File? final_scaffold = make_output.outscaffolds
+        File? final_agp = make_output.outagp
+        File? final_covstat = make_output.outcovstats
+        File? final_samgz = make_output.outsamgz
+        File? final_bam = make_output.outbam
+        File? final_asmstat = make_output.outasmstats
     }
     parameter_meta{
 	input_file: "illumina paired-end interleaved fastq files"
@@ -55,38 +72,44 @@ workflow jgi_metaASM {
 }
 
 task make_output{
- 	String outdir
- 	String bbcms_output
- 	String assy_output
- 	String agp_output
- 	String mapping_output
+        String outdir
+        File contigs
+        File scaffolds
+        File agp
+        File bam
+        File samgz
+        File covstats
+        File asmstats
+        String contigs_name=basename(contigs)
+        String scaffolds_name=basename(contigs)
+        String agp_name=basename(contigs)
+        String bam_name=basename(contigs)
+        String samgz_name=basename(contigs)
+        String covstats_name=basename(contigs)
+        String asmstats_name=basename(contigs)
+        String container
  
  	command{
  		if [ ! -z ${outdir} ]; then
- 			mkdir -p ${outdir}/final_assembly ${outdir}/bbcms ${outdir}/mapping
- 			bbcms_path=`dirname ${bbcms_output}`
- 			assy_path=`dirname ${assy_output}`
- 			agp_path=`dirname ${agp_output}`
- 			mapping_path=`dirname ${mapping_output}`
- 			mv -f $bbcms_path/* ${outdir}/bbcms
- 			mv -f $assy_path ${outdir}/
- 			mv -f $agp_path/* ${outdir}/final_assembly
- 			mv -f $mapping_path/* ${outdir}/mapping
+ 			mkdir -p ${outdir}
+ 			cp ${contigs} ${scaffolds} ${agp} ${bam} \
+ 			   ${samgz} ${covstats} ${asmstats} ${outdir}
  			chmod 764 -R ${outdir}
  		fi
  	}
 	runtime {
+                docker: container
 		mem: "1 GiB"
 		cpu:  1
 	}
 	output{
-		String outcontigs = "${outdir}/final_assembly/assembly_contigs.fna"
-	        String outscaffolds = "${outdir}/final_assembly/assembly_scaffolds.fna"
-      		String outagp = "${outdir}/final_assembly/assembly.agp"
-		String outbam = "${outdir}/mapping/pairedMapped_sorted.bam"
-		String outsamgz = "${outdir}/mapping/pairedMapped.sam.gz" 
-		String outcovstats = "${outdir}/mapping/covstats.txt"
-		String outasmstats = "${outdir}/final_assembly/stats.json"
+		File? outcontigs = "${outdir}/${contigs_name}"
+		File? outscaffolds = "${outdir}/${scaffolds_name}"
+		File? outagp = "${outdir}/${agp_name}"
+		File? outbam = "${outdir}/${bam_name}"
+		File? outsamgz = "${outdir}/${samgz_name}"
+		File? outcovstats = "${outdir}/${covstats_name}"
+		File? outasmstats = "${outdir}/${asmstats_name}"
 	}
 }
 
@@ -127,7 +150,7 @@ task read_mapping_pairs{
              cat ${sep=" " reads} > infile.fastq
              export mapping_input="infile.fastq"
         fi
-        
+
         bbmap.sh -Xmx${default="105G" memory} threads=${jvm_threads} nodisk=true interleaved=true ambiguous=random in=$mapping_input ref=${ref} out=${filename_unsorted} covstats=${filename_cov} bamscript=${filename_bamscript}
         samtools sort -m100M -@ ${jvm_threads} ${filename_unsorted} -o ${filename_sorted}
         samtools index ${filename_sorted}
@@ -161,7 +184,7 @@ task create_agp {
 	    cpu:  16
      }
     command{
-	    echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
+	echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
         touch ${filename_resources};
         curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &	
         sleep 30
@@ -177,6 +200,7 @@ task create_agp {
 	File outcontigs = filename_contigs
 	File outscaffolds = filename_scaffolds
 	File outagp = filename_agp
+	File outstats = "stats.json"
     	File outlegend = filename_legend
     	File outresources = filename_resources
     }
@@ -205,7 +229,7 @@ task assy {
         sleep 30
         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
-        
+
         spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${spades_cpu} -1 ${infile1} -2 ${infile2}
      }
      output {
@@ -242,7 +266,7 @@ task bbcms {
         sleep 30
         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
-        if file --mime -b ${input_files[0]} | grep gzip; then 
+        if file --mime -b ${input_files[0]} | grep gzip; then
              cat ${sep=" " input_files} > infile.fastq.gz
              export bbcms_input="infile.fastq.gz"
         fi

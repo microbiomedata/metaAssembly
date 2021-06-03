@@ -81,12 +81,12 @@ task make_output{
         File covstats
         File asmstats
         String contigs_name=basename(contigs)
-        String scaffolds_name=basename(contigs)
-        String agp_name=basename(contigs)
-        String bam_name=basename(contigs)
-        String samgz_name=basename(contigs)
-        String covstats_name=basename(contigs)
-        String asmstats_name=basename(contigs)
+        String scaffolds_name=basename(scaffolds)
+        String agp_name=basename(agp)
+        String bam_name=basename(bam)
+        String samgz_name=basename(samgz)
+        String covstats_name=basename(covstats)
+        String asmstats_name=basename(asmstats)
         String container
  
  	command{

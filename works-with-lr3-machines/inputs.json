@@ -1,0 +1,6 @@
+{
+   "metagenome_assembly_and_alignment.input_files": [
+      "./11809.7.220839.TCCTGAG-TATCCTC.filter-CELL-ENRICHMENT.anqdpht.fastq.gz"
+   ],
+   "metagenome_assembly_and_alignment.nersc": true
+}

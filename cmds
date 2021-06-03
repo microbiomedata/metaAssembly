@@ -1,0 +1,2 @@
+# cmd for testing 
+java -Dconfig.file=shifter.conf -Dbackend.providers.Local.config.dockerRoot=$(pwd)/cromwell-executions -jar /global/cfs/projectdirs/jaws/cromwell/cromwell.jar run metagenome_assembly_and_alignment.wdl -i input.json

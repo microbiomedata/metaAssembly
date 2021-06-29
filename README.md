@@ -13,9 +13,9 @@ Description of the files:
 
 ## The Docker image and Dockerfile can be found here
 
-[microbiomedata/bbtools:38.44](https://hub.docker.com/r/microbiomedata/bbtools)
+[microbiomedata/bbtools:38.90](https://hub.docker.com/r/microbiomedata/bbtools)
 
-[microbiomedata/spades:3.13.0](https://hub.docker.com/r/microbiomedata/spades)
+[microbiomedata/spades:3.15.0](https://hub.docker.com/r/microbiomedata/spades)
 
 
 ## Input files
@@ -26,15 +26,24 @@ Description of the files:
     
 3. output path
 
-4. memory (optional) ex: "jgi_metaASM.memory": "105G"
+4. input_interleaved (boolean)
 
-5. threads (optional) ex: "jgi_metaASM.threads": "16"
+5. forwards reads fastq file (required value when input_interleaved is false, otherwise use [] )
+
+6. reverse reads fastq file (required value when input_interleaved is false, otherwise use [] )
+
+7. memory (optional) ex: "jgi_metaASM.memory": "105G"
+
+8. threads (optional) ex: "jgi_metaASM.threads": "16"
 
 ```
 {
   "jgi_metaASM.input_file":["/global/cfs/projectdirs/m3408/ficus/11809.7.220839.TCCTGAG-ACTGCAT.fastq.gz"],
   "jgi_metaASM.rename_contig_prefix":"503125_160870",
   "jgi_metaASM.outdir":"/global/cfs/projectdirs/m3408/aim2/metagenome/assembly/ficus/503125_160870",
+  "jgi_metaASM.input_interleaved":true,
+  "jgi_metaASM.input_fq1":[],
+  "jgi_metaASM.input_fq2":[],
   "jgi_metaASM.memory": "105G",
   "jgi_metaASM.threads": "16"
 }

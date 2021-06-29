@@ -64,14 +64,6 @@ Sample dataset(s)
 
 Zymobiomics mock-community DNA control (`SRR7877884 <https://www.ebi.ac.uk/ena/browser/view/SRR7877884>`_); this original dataset is ~4 GB.
 
-.. note::
-
-    If the input data is paired-end data, it must be in interleaved format. The following command will interleave the files, using the above dataset as an example:
-
-.. code-block:: bash   
-
-    paste <(zcat SRR7877884_1.fastq.gz | paste - - - -) <(zcat SRR7877884_2.fastq.gz | paste - - - -) | tr '\t' '\n' | gzip -c > SRR7877884-int.fastq.gz
-
 For testing purposes and for the following examples, we used a 10% sub-sampling of the above dataset: (`SRR7877884-int-0.1.fastq.gz <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884-int-0.1.fastq.gz>`_). This dataset is already interleaved. 
 
 
@@ -83,8 +75,11 @@ A JSON file containing the following information:
 1. the path to the input FASTQ file (Illumina paired-end interleaved FASTQ) (recommended the output of the Reads QC workflow.)
 2. the contig prefix for the FASTA header
 3. the output path
-4. memory (optional) ex: “jgi_metaASM.memory”: “105G”
-5. threads (optional) ex: “jgi_metaASM.threads”: “16”
+4. input_interleaved (boolean)
+5. forwards reads fastq file (required value when input_interleaved is false, otherwise use [] )
+6. reverse reads fastq file (required value when input_interleaved is false, otherwise use [] )
+7. memory (optional) ex: “jgi_metaASM.memory”: “105G”
+8. threads (optional) ex: “jgi_metaASM.threads”: “16”
 
 An example input JSON file is shown below::
 
@@ -92,6 +87,9 @@ An example input JSON file is shown below::
         "jgi_metaASM.input_file":["/path/to/SRR7877884-int-0.1.fastq.gz "],
         "jgi_metaASM.rename_contig_prefix":"projectID",
         "jgi_metaASM.outdir":"/path/to/ SRR7877884-int-0.1_assembly",
+        "jgi_metaASM.input_interleaved":true,
+        "jgi_metaASM.input_fq1":[],
+        "jgi_metaASM.input_fq2":[],
         "jgi_metaASM.memory": "105G",
         "jgi_metaASM.threads": "16"
     }
@@ -99,36 +97,51 @@ An example input JSON file is shown below::
 Output
 ------
 
-The output directory will contain four output sub-directories: bbcms, final_assembly, mapping and spades3. The main output, the assembled contigs, are in final_assembly/assembly.contigs.fasta.
+The output directory will contain following files::
 
-Part of an example output JSON file is shown below::
 
-    ├── bbcms
-    │   ├── berkeleylab-jgi-meta-60ade422cd4e
-    │   ├── counts.metadata.json
-    │   ├── input.corr.fastq.gz
-    │   ├── input.corr.left.fastq.gz
-    │   ├── input.corr.right.fastq.gz
-    │   ├── readlen.txt
-    │   └── unique31mer.txt
-    ├── final_assembly
-    │   ├── assembly.agp
-    │   ├── assembly_contigs.fna
-    │   ├── assembly_scaffolds.fna
-    │   └── assembly_scaffolds.legend
-    ├── mapping
-    │   ├── covstats.txt (mapping_stats.txt)
-    │   ├── pairedMapped.bam
-    │   ├── pairedMapped.sam.gz
-    │   ├── pairedMapped_sorted.bam
-    │   └── pairedMapped_sorted.bam.bai
-    └── spades3
-            ├── assembly_graph.fastg
-            ├── assembly_graph_with_scaffolds.gfa
-            ├── contigs.fasta
-            ├── contigs.paths
-            ├── scaffolds.fasta
-            └── scaffolds.paths
+    output/
+    ├── assembly.agp
+    ├── assembly_contigs.fna
+    ├── assembly_scaffolds.fna
+    ├── covstats.txt
+    ├── pairedMapped.sam.gz
+    ├── pairedMapped_sorted.bam
+    └── stats.json
+
+Part of an example output stats JSON file is shown below:
+
+```
+{
+   "scaffolds": 58,
+   "contigs": 58,
+   "scaf_bp": 28406,
+   "contig_bp": 28406,
+   "gap_pct": 0.00000,
+   "scaf_N50": 21,
+   "scaf_L50": 536,
+   "ctg_N50": 21,
+   "ctg_L50": 536,
+   "scaf_N90": 49,
+   "scaf_L90": 317,
+   "ctg_N90": 49,
+   "ctg_L90": 317,
+   "scaf_logsum": 22.158,
+   "scaf_powsum": 2.245,
+   "ctg_logsum": 22.158,
+   "ctg_powsum": 2.245,
+   "asm_score": 0.000,
+   "scaf_max": 1117,
+   "ctg_max": 1117,
+   "scaf_n_gt50K": 0,
+   "scaf_l_gt50K": 0,
+   "scaf_pct_gt50K": 0.0,
+   "gc_avg": 0.39129,
+   "gc_std": 0.03033,
+   "filename": "/global/cfs/cdirs/m3408/aim2/metagenome/assembly/cromwell-executions/jgi_metaASM/3342a6e8-7f78-40e6-a831-364dd2a47baa/call-create_agp/execution/assembly_scaffolds.fna"
+}
+```
+
 
 The table provides all of the output directories, files, and their descriptions.
 

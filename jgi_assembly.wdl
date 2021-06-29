@@ -7,8 +7,26 @@ workflow jgi_metaASM {
     Float uniquekmer=1000
     String bbtools_container="microbiomedata/bbtools:38.90"
     String spades_container="microbiomedata/spades:3.15.0"
+    Boolean input_interleaved = true
+    
+    if (!input_interleaved) {
+        Array[File] input_fq1
+        Array[File] input_fq2
+        ## the zip() function generates an array of pairs, use .left and .right to access
+        scatter(file in zip(input_fq1,input_fq2)){
+            call interleave_reads {
+                input:
+                    input_files = [file.left,file.right],
+                    output_file = basename(file.left) + "_" + basename(file.right),
+                    container = bbtools_container
+           }
+        }
+    }
+    Array[File]? interleaved_input_fastqs = if (input_interleaved) then input_file else interleave_reads.out_fastq
+
     call bbcms {
-          input: input_files=input_file, container=bbtools_container, memory=memory
+          input: input_files=interleaved_input_fastqs, 
+                 container=bbtools_container, memory=memory
     }
     call assy {
          input: infile1=bbcms.out1, infile2=bbcms.out2, container=spades_container, threads=threads
@@ -17,7 +35,7 @@ workflow jgi_metaASM {
          input: scaffolds_in=assy.out, container=bbtools_container, rename_contig_prefix = rename_contig_prefix, memory=memory
     }
     call read_mapping_pairs {
-         input: reads=input_file, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads
+         input: reads=interleaved_input_fastqs, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads
     }
     if (defined(outdir)) {
         call make_output {
@@ -292,3 +310,34 @@ task bbcms {
      }
 }
 
+task interleave_reads{
+
+        Array[File] input_files
+        String output_file = "interleaved.fastq.gz"
+        String container
+        
+        command <<<
+            if file --mime -b ${input_files[0]} | grep gzip > /dev/null ; then 
+                paste <(gunzip -c ${input_files[0]} | paste - - - -) <(gunzip -c ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
+                echo ${output_file}
+            else
+                if [[ "${output_file}" == *.gz ]]; then
+                    paste <(cat ${input_files[0]} | paste - - - -) <(cat ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
+                    echo ${output_file}
+                else
+                    paste <(cat ${input_files[0]} | paste - - - -) <(cat ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}.gz
+                    echo ${output_file}.gz
+                fi
+            fi
+        >>>
+        
+        runtime {
+            docker: container
+            memory: "1 GiB"
+            cpu:  1
+        }
+        
+        output {
+                File out_fastq = read_string(stdout())
+        }
+}

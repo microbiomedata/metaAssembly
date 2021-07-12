@@ -8,10 +8,10 @@ workflow jgi_metaASM {
     String bbtools_container="microbiomedata/bbtools:38.90"
     String spades_container="microbiomedata/spades:3.15.0"
     Boolean input_interleaved = true
+    Array[File] input_fq1
+    Array[File] input_fq2
     
     if (!input_interleaved) {
-        Array[File] input_fq1
-        Array[File] input_fq2
         ## the zip() function generates an array of pairs, use .left and .right to access
         scatter(file in zip(input_fq1,input_fq2)){
             call interleave_reads {

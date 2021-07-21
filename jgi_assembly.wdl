@@ -10,6 +10,11 @@ workflow jgi_metaASM {
     Boolean input_interleaved = true
     Array[File] input_fq1
     Array[File] input_fq2
+    String? proj = "metaAssembly" 
+    String? activity_id = "${proj}"  # "nmdc:xxxxxxxxxxxxxxx"
+    String resource = "NERSC - Cori"
+    String url_root = "https://data.microbiomedata.org/data/"
+    String git_url = "https://github.com/microbiomedata/metaAssembly/releases/tag/1.0.3"
     
     if (!input_interleaved) {
         ## the zip() function generates an array of pairs, use .left and .right to access
@@ -37,6 +42,20 @@ workflow jgi_metaASM {
     call read_mapping_pairs {
          input: reads=interleaved_input_fastqs, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads
     }
+    call generate_objects {
+         input: container="microbiomedata/workflowmeta:1.0.0",
+                start = bbcms.start,
+                activity_id = "${activity_id}",
+                resource = "${resource}",
+                url_base = "${url_root}",
+                git_url = "${git_url}",
+                read = input_file,
+                covstats = read_mapping_pairs.outcovfile,
+                fasta = create_agp.outcontigs,
+                scaffold = create_agp.outscaffolds,
+                agp = create_agp.outagp,
+                bam = read_mapping_pairs.outbamfile,
+    }
     if (defined(outdir)) {
         call make_output {
              input: outdir=outdir,
@@ -47,6 +66,8 @@ workflow jgi_metaASM {
                     samgz=read_mapping_pairs.outsamfile,
                     covstats=read_mapping_pairs.outcovfile,
                     asmstats=create_agp.outstats,
+                    activity_json=generate_objects.activity_json,
+                    object_json=generate_objects.data_object_json,
                     container=bbtools_container
         }
     }
@@ -58,6 +79,8 @@ workflow jgi_metaASM {
         File samgz=read_mapping_pairs.outsamfile
         File covstats=read_mapping_pairs.outcovfile
         File asmstats=create_agp.outstats
+        File activityjson=generate_objects.activity_json
+        File objectjson=generate_objects.data_object_json
         File? final_contig = make_output.outcontigs
         File? final_scaffold = make_output.outscaffolds
         File? final_agp = make_output.outagp
@@ -67,16 +90,18 @@ workflow jgi_metaASM {
         File? final_asmstat = make_output.outasmstats
     }
     parameter_meta{
-	input_file: "illumina paired-end interleaved fastq files"
-	outdir: "the final output directory path"
-	rename_contig_prefix: "contig prefix for fasta header, default: scaffold"
-	final_contig: "assembled contigs fasta file"
-	final_scaffold: "assembled scaffold fasta file"
-	final_agp: "assembled AGP file"
-	final_covstat: "contig coverage stats file"
-	final_samgz: "reads aligned to contigs sam file with gz compressed"
-	final_bam: "reads aligned to contigs bam file"
-	final_asmstat: "assembled scaffold/contigs statistical numbers"
+        input_file: "illumina paired-end interleaved fastq files"
+        outdir: "the final output directory path"
+        rename_contig_prefix: "contig prefix for fasta header, default: scaffold"
+        final_contig: "assembled contigs fasta file"
+        final_scaffold: "assembled scaffold fasta file"
+        final_agp: "assembled AGP file"
+        final_covstat: "contig coverage stats file"
+        final_samgz: "reads aligned to contigs sam file with gz compressed"
+        final_bam: "reads aligned to contigs bam file"
+        final_asmstat: "assembled scaffold/contigs statistical numbers"
+        activityjson: "nmdc activity json file"
+        objectjson: "nmdc data object json file"
         memory: "optional for jvm memory for bbtools, ex: 32G"
         threads: "optional for jvm/spades threads for bbtools ex: 16"
     }
@@ -84,10 +109,50 @@ workflow jgi_metaASM {
     meta {
         author: "Chienchi Lo, B10, LANL"
         email: "chienchi@lanl.gov"
-        version: "1.0.0"
+        version: "1.0.3"
     }
 
 }
+
+task generate_objects{
+    String container
+    String start
+    String activity_id
+    String resource
+    String url_base
+    String git_url
+    Array[File] read
+    File covstats
+    File fasta
+    File scaffold
+    File agp
+    File bam
+   
+    command{
+        set -e
+        end=`date --iso-8601=seconds`
+        /scripts/generate_objects.py --type "assembly" --id ${activity_id} \
+             --start ${start} --end $end \
+             --resource '${resource}' --url ${url_base} --giturl ${git_url} \
+             --inputs ${sep=' ' read} \
+             --outputs \
+             ${covstats} 'Metagenome Contig Coverage Stats' \
+             ${fasta} 'Assembled contigs fasta' \
+             ${scaffold} 'Assembled scaffold fasta' \
+             ${agp} 'Assembled AGP file' \
+             ${bam} 'Metagenome Alignment BAM file'
+    }
+    runtime {
+        docker: container
+        memory: "10 GiB"
+        cpu:  1
+    }
+    output{
+        File activity_json = "activity.json"
+        File data_object_json = "data_objects.json"
+    }
+}
+
 
 task make_output{
         String outdir
@@ -98,6 +163,9 @@ task make_output{
         File samgz
         File covstats
         File asmstats
+        File activity_json
+        File object_json
+        
         String contigs_name=basename(contigs)
         String scaffolds_name=basename(scaffolds)
         String agp_name=basename(agp)
@@ -105,30 +173,35 @@ task make_output{
         String samgz_name=basename(samgz)
         String covstats_name=basename(covstats)
         String asmstats_name=basename(asmstats)
+        String activity_json_name=basename(activity_json)
+        String object_json_name=basename(object_json)
         String container
  
- 	command{
- 		if [ ! -z ${outdir} ]; then
- 			mkdir -p ${outdir}
- 			cp ${contigs} ${scaffolds} ${agp} ${bam} \
- 			   ${samgz} ${covstats} ${asmstats} ${outdir}
- 			chmod 764 -R ${outdir}
- 		fi
- 	}
-	runtime {
-                docker: container
-		memory: "1 GiB"
-		cpu:  1
-	}
-	output{
-		File? outcontigs = "${outdir}/${contigs_name}"
-		File? outscaffolds = "${outdir}/${scaffolds_name}"
-		File? outagp = "${outdir}/${agp_name}"
-		File? outbam = "${outdir}/${bam_name}"
-		File? outsamgz = "${outdir}/${samgz_name}"
-		File? outcovstats = "${outdir}/${covstats_name}"
-		File? outasmstats = "${outdir}/${asmstats_name}"
-	}
+    command{
+        if [ ! -z ${outdir} ]; then
+            mkdir -p ${outdir}
+            cp ${contigs} ${scaffolds} ${agp} ${bam} \
+               ${samgz} ${covstats} ${asmstats} ${activity_json} \
+               ${object_json} ${outdir}
+            chmod 755 -R ${outdir}
+        fi
+    }
+    runtime {
+        docker: container
+        memory: "1 GiB"
+        cpu:  1
+    }
+    output{
+        File? outcontigs = "${outdir}/${contigs_name}"
+        File? outscaffolds = "${outdir}/${scaffolds_name}"
+        File? outagp = "${outdir}/${agp_name}"
+        File? outbam = "${outdir}/${bam_name}"
+        File? outsamgz = "${outdir}/${samgz_name}"
+        File? outcovstats = "${outdir}/${covstats_name}"
+        File? outasmstats = "${outdir}/${asmstats_name}"
+        File? outactivity = "${outdir}/${activity_json_name}"
+        File? outobject = "${outdir}/${object_json_name}"
+    }
 }
 
 task read_mapping_pairs{
@@ -148,10 +221,10 @@ task read_mapping_pairs{
     String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
     String jvm_threads=select_first([threads,system_cpu])
     runtime {
-            docker: container
-            memory: "120 GiB"
-	    cpu:  16
-	    maxRetries: 1
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+        maxRetries: 1
      }
     command{
         echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
@@ -173,16 +246,16 @@ task read_mapping_pairs{
         samtools sort -m100M -@ ${jvm_threads} ${filename_unsorted} -o ${filename_sorted}
         samtools index ${filename_sorted}
         reformat.sh -Xmx${default="105G" memory} in=${filename_unsorted} out=${filename_outsam} overwrite=true
-	ln ${filename_cov} mapping_stats.txt
+        ln ${filename_cov} mapping_stats.txt
         rm $mapping_input
-  }
-  output{
-      File outbamfile = filename_sorted
-      File outbamfileidx = filename_sorted_idx
-      File outcovfile = filename_cov
-      File outsamfile = filename_outsam
-      File outresources = filename_resources
-  }
+    }
+    output{
+        File outbamfile = filename_sorted
+        File outbamfileidx = filename_sorted_idx
+        File outcovfile = filename_cov
+        File outsamfile = filename_outsam
+        File outresources = filename_resources
+    }
 }
 
 task create_agp {
@@ -197,30 +270,30 @@ task create_agp {
     String filename_agp="${prefix}.agp"
     String filename_legend="${prefix}_scaffolds.legend"
     runtime {
-            docker: container
-            memory: "120 GiB"
-	    cpu:  16
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
      }
     command{
-	echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
+    echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
         touch ${filename_resources};
-        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &	
+        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &    
         sleep 30
         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         fungalrelease.sh -Xmx${default="105G" memory} in=${scaffolds_in} out=${filename_scaffolds} outc=${filename_contigs} agp=${filename_agp} legend=${filename_legend} mincontig=200 minscaf=200 sortscaffolds=t sortcontigs=t overwrite=t
         if [ "${rename_contig_prefix}" != "scaffold" ]; then
             sed -i 's/scaffold/${rename_contig_prefix}_scf/g' ${filename_contigs} ${filename_scaffolds} ${filename_agp} ${filename_legend}
         fi
-	bbstats.sh format=8 in=${filename_scaffolds} out=stats.json
-	sed -i 's/l_gt50k/l_gt50K/g' stats.json
+    bbstats.sh format=8 in=${filename_scaffolds} out=stats.json
+    sed -i 's/l_gt50k/l_gt50K/g' stats.json
     }
     output{
-	File outcontigs = filename_contigs
-	File outscaffolds = filename_scaffolds
-	File outagp = filename_agp
-	File outstats = "stats.json"
-    	File outlegend = filename_legend
-    	File outresources = filename_resources
+    File outcontigs = filename_contigs
+    File outscaffolds = filename_scaffolds
+    File outagp = filename_agp
+    File outstats = "stats.json"
+        File outlegend = filename_legend
+        File outresources = filename_resources
     }
 }
 
@@ -238,12 +311,12 @@ task assy {
      runtime {
             docker: container
             memory: "120 GiB"
-	    cpu:  16
+        cpu:  16
      }
      command{
         echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
         touch ${filename_resources};
-        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &		
+        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &        
         sleep 30
         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
@@ -251,9 +324,9 @@ task assy {
         spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${spades_cpu} -1 ${infile1} -2 ${infile2}
      }
      output {
-            File out = filename_outfile
-            File outlog = filename_spadeslog
-            File outresources = filename_resources
+        File out = filename_outfile
+        File outlog = filename_spadeslog
+        File outresources = filename_resources
      }
 }
 
@@ -272,23 +345,26 @@ task bbcms {
      String filename_kmerfile="unique31mer.txt"
      String filename_counts="counts.metadata.json"
      runtime {
-            docker: container
-            memory: "120 GiB"
-	    cpu:  16
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
      }
 
      command {
         echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
         touch ${filename_resources};
-        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &		
+        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &        
         sleep 30
         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
+        # Capture the start time
+        date --iso-8601=seconds > start.txt
+        
         if file --mime -b ${input_files[0]} | grep gzip; then
              cat ${sep=" " input_files} > infile.fastq.gz
              export bbcms_input="infile.fastq.gz"
         fi
-	if file --mime -b ${input_files[0]} | grep plain; then
+        if file --mime -b ${input_files[0]} | grep plain; then
              cat ${sep=" " input_files} > infile.fastq
              export bbcms_input="infile.fastq"
         fi
@@ -298,46 +374,47 @@ task bbcms {
         rm $bbcms_input
      }
      output {
-            File out = filename_outfile
-            File out1 = filename_outfile1
-            File out2 = filename_outfile2
-            File outreadlen = filename_readlen
-            File stdout = filename_outlog
-            File stderr = filename_errlog
-            File outcounts = filename_counts
-            File outkmer = filename_kmerfile
-            File outresources = filename_resources
+         File out = filename_outfile
+         File out1 = filename_outfile1
+         File out2 = filename_outfile2
+         File outreadlen = filename_readlen
+         File stdout = filename_outlog
+         File stderr = filename_errlog
+         File outcounts = filename_counts
+         File outkmer = filename_kmerfile
+         File outresources = filename_resources
+         String start = read_string("start.txt")
      }
 }
 
 task interleave_reads{
 
-        Array[File] input_files
-        String output_file = "interleaved.fastq.gz"
-        String container
-        
-        command <<<
-            if file --mime -b ${input_files[0]} | grep gzip > /dev/null ; then 
-                paste <(gunzip -c ${input_files[0]} | paste - - - -) <(gunzip -c ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
+    Array[File] input_files
+    String output_file = "interleaved.fastq.gz"
+    String container
+    
+    command <<<
+        if file --mime -b ${input_files[0]} | grep gzip > /dev/null ; then 
+            paste <(gunzip -c ${input_files[0]} | paste - - - -) <(gunzip -c ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
+            echo ${output_file}
+        else
+            if [[ "${output_file}" == *.gz ]]; then
+                paste <(cat ${input_files[0]} | paste - - - -) <(cat ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
                 echo ${output_file}
             else
-                if [[ "${output_file}" == *.gz ]]; then
-                    paste <(cat ${input_files[0]} | paste - - - -) <(cat ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
-                    echo ${output_file}
-                else
-                    paste <(cat ${input_files[0]} | paste - - - -) <(cat ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}.gz
-                    echo ${output_file}.gz
-                fi
+                paste <(cat ${input_files[0]} | paste - - - -) <(cat ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}.gz
+                echo ${output_file}.gz
             fi
-        >>>
-        
-        runtime {
-            docker: container
-            memory: "1 GiB"
-            cpu:  1
-        }
-        
-        output {
-                File out_fastq = read_string(stdout())
-        }
+        fi
+    >>>
+    
+    runtime {
+        docker: container
+        memory: "1 GiB"
+        cpu:  1
+    }
+    
+    output {
+         File out_fastq = read_string(stdout())
+    }
 }

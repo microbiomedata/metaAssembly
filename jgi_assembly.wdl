@@ -117,7 +117,7 @@ task make_output{
  	}
 	runtime {
                 docker: container
-		mem: "1 GiB"
+		memory: "1 GiB"
 		cpu:  1
 	}
 	output{
@@ -149,7 +149,7 @@ task read_mapping_pairs{
     String jvm_threads=select_first([threads,system_cpu])
     runtime {
             docker: container
-            mem: "120 GiB"
+            memory: "120 GiB"
 	    cpu:  16
 	    maxRetries: 1
      }
@@ -198,7 +198,7 @@ task create_agp {
     String filename_legend="${prefix}_scaffolds.legend"
     runtime {
             docker: container
-            mem: "120 GiB"
+            memory: "120 GiB"
 	    cpu:  16
      }
     command{
@@ -237,7 +237,7 @@ task assy {
      String spades_cpu=select_first([threads,system_cpu])
      runtime {
             docker: container
-            mem: "120 GiB"
+            memory: "120 GiB"
 	    cpu:  16
      }
      command{
@@ -273,7 +273,7 @@ task bbcms {
      String filename_counts="counts.metadata.json"
      runtime {
             docker: container
-            mem: "120 GiB"
+            memory: "120 GiB"
 	    cpu:  16
      }
 

@@ -54,7 +54,7 @@ workflow jgi_metaASM {
                 fasta = create_agp.outcontigs,
                 scaffold = create_agp.outscaffolds,
                 agp = create_agp.outagp,
-                bam = read_mapping_pairs.outbamfile,
+                bam = read_mapping_pairs.outbamfile
     }
     if (defined(outdir)) {
         call make_output {

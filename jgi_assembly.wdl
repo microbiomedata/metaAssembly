@@ -51,6 +51,7 @@ workflow jgi_metaASM {
                 git_url = "${git_url}",
                 read = input_file,
                 covstats = read_mapping_pairs.outcovfile,
+                asmstats = create_agp.outstats,
                 fasta = create_agp.outcontigs,
                 scaffold = create_agp.outscaffolds,
                 agp = create_agp.outagp,
@@ -127,12 +128,15 @@ task generate_objects{
     File scaffold
     File agp
     File bam
+    File asmstats
    
     command{
         set -e
         end=`date --iso-8601=seconds`
+        grev -v "filename" ${asmstats} > stats.json
         /scripts/generate_objects.py --type "assembly" --id ${activity_id} \
              --start ${start} --end $end \
+             --extra "stats.json"
              --resource '${resource}' --url ${url_base} --giturl ${git_url} \
              --inputs ${sep=' ' read} \
              --outputs \
@@ -273,9 +277,9 @@ task create_agp {
         docker: container
         memory: "120 GiB"
         cpu:  16
-     }
+    }
     command{
-    echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
+        echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
         touch ${filename_resources};
         curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &    
         sleep 30
@@ -284,14 +288,14 @@ task create_agp {
         if [ "${rename_contig_prefix}" != "scaffold" ]; then
             sed -i 's/scaffold/${rename_contig_prefix}_scf/g' ${filename_contigs} ${filename_scaffolds} ${filename_agp} ${filename_legend}
         fi
-    bbstats.sh format=8 in=${filename_scaffolds} out=stats.json
-    sed -i 's/l_gt50k/l_gt50K/g' stats.json
+        bbstats.sh format=8 in=${filename_scaffolds} out=stats.json
+        sed -i 's/l_gt50k/l_gt50K/g' stats.json
     }
     output{
-    File outcontigs = filename_contigs
-    File outscaffolds = filename_scaffolds
-    File outagp = filename_agp
-    File outstats = "stats.json"
+        File outcontigs = filename_contigs
+        File outscaffolds = filename_scaffolds
+        File outagp = filename_agp
+        File outstats = "stats.json"
         File outlegend = filename_legend
         File outresources = filename_resources
     }
@@ -309,24 +313,24 @@ task assy {
      String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
      String spades_cpu=select_first([threads,system_cpu])
      runtime {
-            docker: container
-            memory: "120 GiB"
-        cpu:  16
+         docker: container
+         memory: "120 GiB"
+         cpu:  16
      }
      command{
-        echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
-        touch ${filename_resources};
-        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &        
-        sleep 30
-        export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
-        set -eo pipefail
+         echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
+         touch ${filename_resources};
+         curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &        
+         sleep 30
+         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
+         set -eo pipefail
 
-        spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${spades_cpu} -1 ${infile1} -2 ${infile2}
+         spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${spades_cpu} -1 ${infile1} -2 ${infile2}
      }
      output {
-        File out = filename_outfile
-        File outlog = filename_spadeslog
-        File outresources = filename_resources
+         File out = filename_outfile
+         File outlog = filename_spadeslog
+         File outresources = filename_resources
      }
 }
 
@@ -345,33 +349,33 @@ task bbcms {
      String filename_kmerfile="unique31mer.txt"
      String filename_counts="counts.metadata.json"
      runtime {
-        docker: container
-        memory: "120 GiB"
-        cpu:  16
+         docker: container
+         memory: "120 GiB"
+         cpu:  16
      }
 
      command {
-        echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
-        touch ${filename_resources};
-        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &        
-        sleep 30
-        export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
-        set -eo pipefail
-        # Capture the start time
-        date --iso-8601=seconds > start.txt
+         echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
+         touch ${filename_resources};
+         curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &        
+         sleep 30
+         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
+         set -eo pipefail
+         # Capture the start time
+         date --iso-8601=seconds > start.txt
         
-        if file --mime -b ${input_files[0]} | grep gzip; then
+         if file --mime -b ${input_files[0]} | grep gzip; then
              cat ${sep=" " input_files} > infile.fastq.gz
              export bbcms_input="infile.fastq.gz"
-        fi
-        if file --mime -b ${input_files[0]} | grep plain; then
+         fi
+         if file --mime -b ${input_files[0]} | grep plain; then
              cat ${sep=" " input_files} > infile.fastq
              export bbcms_input="infile.fastq"
-        fi
-        bbcms.sh -Xmx${default="105G" memory} metadatafile=${filename_counts} mincount=2 highcountfraction=0.6 in=$bbcms_input out=${filename_outfile} > >(tee -a ${filename_outlog}) 2> >(tee -a ${filename_errlog} >&2) && grep Unique ${filename_errlog} | rev |  cut -f 1 | rev  > ${filename_kmerfile}
-        reformat.sh -Xmx${default="105G" memory} in=${filename_outfile} out1=${filename_outfile1} out2=${filename_outfile2}
-        readlength.sh -Xmx${default="105G" memory} in=${filename_outfile} out=${filename_readlen}
-        rm $bbcms_input
+         fi
+         bbcms.sh -Xmx${default="105G" memory} metadatafile=${filename_counts} mincount=2 highcountfraction=0.6 in=$bbcms_input out=${filename_outfile} > >(tee -a ${filename_outlog}) 2> >(tee -a ${filename_errlog} >&2) && grep Unique ${filename_errlog} | rev |  cut -f 1 | rev  > ${filename_kmerfile}
+         reformat.sh -Xmx${default="105G" memory} in=${filename_outfile} out1=${filename_outfile1} out2=${filename_outfile2}
+         readlength.sh -Xmx${default="105G" memory} in=${filename_outfile} out=${filename_readlen}
+         rm $bbcms_input
      }
      output {
          File out = filename_outfile

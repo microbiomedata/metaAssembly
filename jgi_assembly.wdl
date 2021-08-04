@@ -289,7 +289,7 @@ task create_agp {
             sed -i 's/scaffold/${rename_contig_prefix}_scf/g' ${filename_contigs} ${filename_scaffolds} ${filename_agp} ${filename_legend}
         fi
         bbstats.sh format=8 in=${filename_scaffolds} out=stats.json
-        sed -i 's/l_gt50k/l_gt50K/g' stats.json
+        sed -i -e 's/l_gt50k/l_gt50K/g' -e 's/.*\/\(.*scaffolds.fna\"\)/\"filename\": \"\1/g' stats.json
     }
     output{
         File outcontigs = filename_contigs

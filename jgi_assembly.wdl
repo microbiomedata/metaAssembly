@@ -133,7 +133,7 @@ task generate_objects{
     command{
         set -e
         end=`date --iso-8601=seconds`
-        grev -v "filename" ${asmstats} > stats.json
+        grep -v "filename" ${asmstats} > stats.json
         /scripts/generate_objects.py --type "assembly" --id ${activity_id} \
              --start ${start} --end $end \
              --extra "stats.json"

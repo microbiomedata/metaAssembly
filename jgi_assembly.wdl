@@ -389,8 +389,8 @@ task bbcms {
      }
      output {
          File out = filename_outfile
-         File out1 = filename_outfile1
-         File out2 = filename_outfile2
+         File out1 = if paired then filename_outfile1 else filename_outfile
+         File out2 = if paired then filename_outfile2 else filename_outfile
          File outreadlen = filename_readlen
          File stdout = filename_outlog
          File stderr = filename_errlog

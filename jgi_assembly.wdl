@@ -15,8 +15,9 @@ workflow jgi_metaASM {
     String resource = "NERSC - Cori"
     String url_root = "https://data.microbiomedata.org/data/"
     String git_url = "https://github.com/microbiomedata/metaAssembly/releases/tag/1.0.3"
+    Boolean? paired = true
     
-    if (!input_interleaved) {
+    if (!input_interleaved && paired) {
         ## the zip() function generates an array of pairs, use .left and .right to access
         scatter(file in zip(input_fq1,input_fq2)){
             call interleave_reads {
@@ -27,20 +28,20 @@ workflow jgi_metaASM {
            }
         }
     }
-    Array[File]? interleaved_input_fastqs = if (input_interleaved) then input_file else interleave_reads.out_fastq
+    Array[File]? interleaved_input_fastqs = if (input_interleaved || !paired) then input_file else interleave_reads.out_fastq
 
     call bbcms {
           input: input_files=interleaved_input_fastqs, 
-                 container=bbtools_container, memory=memory
+                 container=bbtools_container, memory=memory, paired=paired
     }
     call assy {
-         input: infile1=bbcms.out1, infile2=bbcms.out2, container=spades_container, threads=threads
+         input: infile1=bbcms.out1, infile2=bbcms.out2, container=spades_container, threads=threads, paired=paired
     }
     call create_agp {
          input: scaffolds_in=assy.out, container=bbtools_container, rename_contig_prefix = rename_contig_prefix, memory=memory
     }
     call read_mapping_pairs {
-         input: reads=interleaved_input_fastqs, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads
+         input: reads=interleaved_input_fastqs, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads,  paired=paired
     }
     call generate_objects {
          input: container="microbiomedata/workflowmeta:1.0.0",
@@ -214,7 +215,8 @@ task read_mapping_pairs{
     String container
     String? memory
     String? threads
-
+    Boolean paired = true
+    String bbmap_interleaved_flag = if paired then 'interleaved=true' else 'interleaved=false'
     String filename_resources="resources.log"
     String filename_unsorted="pairedMapped.bam"
     String filename_outsam="pairedMapped.sam.gz"
@@ -246,7 +248,7 @@ task read_mapping_pairs{
              export mapping_input="infile.fastq"
         fi
 
-        bbmap.sh -Xmx${default="105G" memory} threads=${jvm_threads} nodisk=true interleaved=true ambiguous=random in=$mapping_input ref=${ref} out=${filename_unsorted} covstats=${filename_cov} bamscript=${filename_bamscript}
+        bbmap.sh -Xmx${default="105G" memory} threads=${jvm_threads} nodisk=true ${bbmap_interleaved_flag} ambiguous=random in=$mapping_input ref=${ref} out=${filename_unsorted} covstats=${filename_cov} bamscript=${filename_bamscript}
         samtools sort -m100M -@ ${jvm_threads} ${filename_unsorted} -o ${filename_sorted}
         samtools index ${filename_sorted}
         reformat.sh -Xmx${default="105G" memory} in=${filename_unsorted} out=${filename_outsam} overwrite=true
@@ -312,6 +314,7 @@ task assy {
      String filename_spadeslog ="${outprefix}/spades.log"
      String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
      String spades_cpu=select_first([threads,system_cpu])
+     Boolean paired = true
      runtime {
          docker: container
          memory: "120 GiB"
@@ -325,7 +328,11 @@ task assy {
          export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
          set -eo pipefail
 
-         spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${spades_cpu} -1 ${infile1} -2 ${infile2}
+         if ${paired}; then
+             spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${spades_cpu} -1 ${infile1} -2 ${infile2}
+         else
+             spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127 -t ${spades_cpu} -s ${infile1}
+         fi
      }
      output {
          File out = filename_outfile
@@ -338,6 +345,7 @@ task bbcms {
      Array[File] input_files
      String container
      String? memory
+     Boolean paired = true
 
      String filename_resources="resources.log"
      String filename_outfile="input.corr.fastq.gz"
@@ -373,7 +381,9 @@ task bbcms {
              export bbcms_input="infile.fastq"
          fi
          bbcms.sh -Xmx${default="105G" memory} metadatafile=${filename_counts} mincount=2 highcountfraction=0.6 in=$bbcms_input out=${filename_outfile} > >(tee -a ${filename_outlog}) 2> >(tee -a ${filename_errlog} >&2) && grep Unique ${filename_errlog} | rev |  cut -f 1 | rev  > ${filename_kmerfile}
-         reformat.sh -Xmx${default="105G" memory} in=${filename_outfile} out1=${filename_outfile1} out2=${filename_outfile2}
+         if ${paired}; then
+             reformat.sh -Xmx${default="105G" memory} in=${filename_outfile} out1=${filename_outfile1} out2=${filename_outfile2}
+         fi
          readlength.sh -Xmx${default="105G" memory} in=${filename_outfile} out=${filename_readlen}
          rm $bbcms_input
      }

@@ -50,7 +50,7 @@ workflow jgi_metaASM {
                 resource = "${resource}",
                 url_base = "${url_root}",
                 git_url = "${git_url}",
-                read = input_file,
+                read = if (!input_interleaved && paired) then flatten([input_fq1,input_fq2]) else input_file,
                 covstats = read_mapping_pairs.outcovfile,
                 asmstats = create_agp.outstats,
                 fasta = create_agp.outcontigs,

@@ -11,7 +11,7 @@ workflow jgi_metaASM {
     Array[File] input_fq1
     Array[File] input_fq2
     String? proj = "metaAssembly" 
-    String? activity_id = "${proj}"  # "nmdc:xxxxxxxxxxxxxxx"
+    String? informed_by = "${proj}"  # "nmdc:xxxxxxxxxxxxxxx"
     String resource = "NERSC - Cori"
     String url_root = "https://data.microbiomedata.org/data/"
     String git_url = "https://github.com/microbiomedata/metaAssembly/releases/tag/1.0.3"
@@ -44,9 +44,10 @@ workflow jgi_metaASM {
          input: reads=interleaved_input_fastqs, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads,  paired=paired
     }
     call generate_objects {
-         input: container="microbiomedata/workflowmeta:1.0.0",
+         input: container="microbiomedata/workflowmeta:1.0.5.1",
+		proj = proj,
                 start = bbcms.start,
-                activity_id = "${activity_id}",
+                informed_by = "${informed_by}",
                 resource = "${resource}",
                 url_base = "${url_root}",
                 git_url = "${git_url}",
@@ -117,9 +118,10 @@ workflow jgi_metaASM {
 }
 
 task generate_objects{
+    String proj
     String container
     String start
-    String activity_id
+    String informed_by
     String resource
     String url_base
     String git_url
@@ -135,10 +137,11 @@ task generate_objects{
         set -e
         end=`date --iso-8601=seconds`
         grep -v "filename" ${asmstats} | sed -e 's/\(gc_std.*\),/\1/' > stats.json
-        /scripts/generate_objects.py --type "assembly" --id ${activity_id} \
+        /scripts/generate_objects.py --type "nmdc:MetagenomeAssembly" --id ${informed_by} \
+	     --name "Assembly Activity for ${proj}" --part ${proj} \
              --start ${start} --end $end \
              --extra "stats.json" \
-             --resource '${resource}' --url ${url_base} --giturl ${git_url} \
+             --resource '${resource}' --url ${url_base}${proj}/assembly/ --giturl ${git_url} \
              --inputs ${sep=' ' read} \
              --outputs \
              ${covstats} 'Metagenome Contig Coverage Stats' \

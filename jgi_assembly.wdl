@@ -134,10 +134,10 @@ task generate_objects{
     command{
         set -e
         end=`date --iso-8601=seconds`
-        grep -v "filename" ${asmstats} > stats.json
+        grep -v "filename" ${asmstats} | sed -e 's/\(gc_std.*\),/\1/' > stats.json
         /scripts/generate_objects.py --type "assembly" --id ${activity_id} \
              --start ${start} --end $end \
-             --extra "stats.json"
+             --extra "stats.json" \
              --resource '${resource}' --url ${url_base} --giturl ${git_url} \
              --inputs ${sep=' ' read} \
              --outputs \

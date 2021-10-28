@@ -1,7 +1,7 @@
 import "jgi_assembly.wdl" as jgi
 
 workflow test_assembly {
-  String bbtools_container="microbiomedata/bbtools:38.90"
+  String bbtools_container="microbiomedata/bbtools:38.94"
   String spades_container="microbiomedata/spades:3.15.0"
   String validate_container="mbabinski17/comparejson:0.1"
   String rename_contig_prefix="scaffold"

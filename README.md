@@ -13,7 +13,7 @@ Description of the files:
 
 ## The Docker image and Dockerfile can be found here
 
-[microbiomedata/bbtools:38.92](https://hub.docker.com/r/microbiomedata/bbtools)
+[microbiomedata/bbtools:38.94](https://hub.docker.com/r/microbiomedata/bbtools)
 
 [microbiomedata/spades:3.15.0](https://hub.docker.com/r/microbiomedata/spades)
 

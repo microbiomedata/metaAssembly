@@ -5,7 +5,7 @@ workflow jgi_metaASM {
     String? threads
     String rename_contig_prefix="scaffold"
     Float uniquekmer=1000
-    String bbtools_container="microbiomedata/bbtools:38.92"
+    String bbtools_container="microbiomedata/bbtools:38.94"
     String spades_container="microbiomedata/spades:3.15.0"
     Boolean input_interleaved = true
     Array[File] input_fq1

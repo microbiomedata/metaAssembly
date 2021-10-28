@@ -18,7 +18,7 @@ The metaAssembly validation workflow is meant to compare test data in json forma
 10. url for NMDC test json (provided for small test data)
 ```
 workflow test_assembly {
-  String bbtools_container="microbiomedata/bbtools:38.90"
+  String bbtools_container="microbiomedata/bbtools:38.94"
   String spades_container="microbiomedata/spades:3.15.0"
   String validate_container="mbabinski17/comparejson:0.1"
   String rename_contig_prefix="scaffold"

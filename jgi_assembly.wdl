@@ -259,7 +259,7 @@ task read_mapping_pairs{
         reformat.sh -Xmx${default="105G" memory} in=${filename_unsorted} out=${filename_outsam} overwrite=true
         cat ${filename_errlog} | grep 'Percent mapped' | perl -ne 'print "#$_"' > mapping_stats.txt
         cat ${filename_cov} >> mapping_stats.txt
-        cp mapping_stats ${filename_cov}
+        cp mapping_stats.txt ${filename_cov}
         rm $mapping_input
     }
     output{

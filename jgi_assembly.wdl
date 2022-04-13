@@ -226,7 +226,9 @@ task read_mapping_pairs{
     String filename_sorted="pairedMapped_sorted.bam"
     String filename_sorted_idx="pairedMapped_sorted.bam.bai"
     String filename_bamscript="to_bam.sh"
+    String filename_errlog="stderr.log"
     String filename_cov="covstats.txt"
+    String filename_cov2="covstats2.txt"
     String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
     String jvm_threads=select_first([threads,system_cpu])
     runtime {
@@ -251,17 +253,20 @@ task read_mapping_pairs{
              export mapping_input="infile.fastq"
         fi
 
-        bbmap.sh -Xmx${default="105G" memory} threads=${jvm_threads} nodisk=true ${bbmap_interleaved_flag} ambiguous=random in=$mapping_input ref=${ref} out=${filename_unsorted} covstats=${filename_cov} bamscript=${filename_bamscript}
+        bbmap.sh -Xmx${default="105G" memory} threads=${jvm_threads} nodisk=true ${bbmap_interleaved_flag} ambiguous=random in=$mapping_input ref=${ref} out=${filename_unsorted} scafstats=${filename_cov2} covstats=${filename_cov} bamscript=${filename_bamscript} 2> >(tee -a ${filename_errlog} >&2) 
         samtools sort -m100M -@ ${jvm_threads} ${filename_unsorted} -o ${filename_sorted}
         samtools index ${filename_sorted}
         reformat.sh -Xmx${default="105G" memory} in=${filename_unsorted} out=${filename_outsam} overwrite=true
-        ln ${filename_cov} mapping_stats.txt
+        cat ${filename_errlog} | grep 'Percent mapped' | perl -ne 'print "#$_"' > mapping_stats.txt
+        cat ${filename_cov} >> mapping_stats.txt
+        cp mapping_stats ${filename_cov}
         rm $mapping_input
     }
     output{
         File outbamfile = filename_sorted
         File outbamfileidx = filename_sorted_idx
         File outcovfile = filename_cov
+        File outcovfile2 = filename_cov2
         File outsamfile = filename_outsam
         File outresources = filename_resources
     }

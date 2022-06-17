@@ -5,19 +5,20 @@ workflow jgi_metaASM {
     String? threads
     String rename_contig_prefix="scaffold"
     Float uniquekmer=1000
-    String bbtools_container="microbiomedata/bbtools:38.90"
+    String bbtools_container="microbiomedata/bbtools:38.96"
     String spades_container="microbiomedata/spades:3.15.0"
+    Boolean paired = true
     call bbcms {
-          input: input_files=input_file, container=bbtools_container, memory=memory
+          input: input_files=input_file, container=bbtools_container, memory=memory,  paired = paired
     }
     call assy {
-         input: infile1=bbcms.out1, infile2=bbcms.out2, container=spades_container, threads=threads
+         input: infile1=bbcms.out1, infile2=bbcms.out2, container=spades_container, threads=threads,  paired = paired
     }
     call create_agp {
          input: scaffolds_in=assy.out, container=bbtools_container, rename_contig_prefix = rename_contig_prefix, memory=memory
     }
     call read_mapping_pairs {
-         input: reads=input_file, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads
+         input: reads=input_file, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads,  paired = paired
     }
     if (defined(outdir)) {
         call make_output {
@@ -99,7 +100,7 @@ task make_output{
  	}
 	runtime {
                 docker: container
-		mem: "1 GiB"
+		memory: "1 GiB"
 		cpu:  1
 	}
 	output{
@@ -119,6 +120,8 @@ task read_mapping_pairs{
     String container
     String? memory
     String? threads
+    Boolean paired = true
+    String bbmap_interleaved_flag = if paired then 'interleaved=true' else 'interleaved=false'
 
     String filename_resources="resources.log"
     String filename_unsorted="pairedMapped.bam"
@@ -131,7 +134,7 @@ task read_mapping_pairs{
     String jvm_threads=select_first([threads,system_cpu])
     runtime {
             docker: container
-            mem: "120 GiB"
+            memory: "120 GiB"
 	    cpu:  16
 	    maxRetries: 1
      }
@@ -150,8 +153,7 @@ task read_mapping_pairs{
              cat ${sep=" " reads} > infile.fastq
              export mapping_input="infile.fastq"
         fi
-
-        bbmap.sh -Xmx${default="105G" memory} threads=${jvm_threads} nodisk=true interleaved=true ambiguous=random in=$mapping_input ref=${ref} out=${filename_unsorted} covstats=${filename_cov} bamscript=${filename_bamscript}
+        bbmap.sh -Xmx${default="105G" memory} threads=${jvm_threads} nodisk=true ${bbmap_interleaved_flag} ambiguous=random in=$mapping_input ref=${ref} out=${filename_unsorted} covstats=${filename_cov} bamscript=${filename_bamscript}
         samtools sort -m100M -@ ${jvm_threads} ${filename_unsorted} -o ${filename_sorted}
         samtools index ${filename_sorted}
         reformat.sh -Xmx${default="105G" memory} in=${filename_unsorted} out=${filename_outsam} overwrite=true
@@ -180,7 +182,7 @@ task create_agp {
     String filename_legend="${prefix}_scaffolds.legend"
     runtime {
             docker: container
-            mem: "120 GiB"
+            memory: "120 GiB"
 	    cpu:  16
      }
     command{
@@ -217,9 +219,10 @@ task assy {
      String filename_spadeslog ="${outprefix}/spades.log"
      String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
      String spades_cpu=select_first([threads,system_cpu])
+     Boolean paired = true
      runtime {
             docker: container
-            mem: "120 GiB"
+            memory: "120 GiB"
 	    cpu:  16
      }
      command{
@@ -229,8 +232,11 @@ task assy {
         sleep 30
         export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
-
-        spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${spades_cpu} -1 ${infile1} -2 ${infile2}
+        if ${paired}; then
+            spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${spades_cpu} -1 ${infile1} -2 ${infile2}
+        else
+            spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127 -t ${spades_cpu} -s ${infile1}
+        fi
      }
      output {
             File out = filename_outfile
@@ -243,6 +249,7 @@ task bbcms {
      Array[File] input_files
      String container
      String? memory
+     Boolean paired = true
 
      String filename_resources="resources.log"
      String filename_outfile="input.corr.fastq.gz"
@@ -255,7 +262,7 @@ task bbcms {
      String filename_counts="counts.metadata.json"
      runtime {
             docker: container
-            mem: "120 GiB"
+            memory: "120 GiB"
 	    cpu:  16
      }
 
@@ -275,14 +282,16 @@ task bbcms {
              export bbcms_input="infile.fastq"
         fi
         bbcms.sh -Xmx${default="105G" memory} metadatafile=${filename_counts} mincount=2 highcountfraction=0.6 in=$bbcms_input out=${filename_outfile} > >(tee -a ${filename_outlog}) 2> >(tee -a ${filename_errlog} >&2) && grep Unique ${filename_errlog} | rev |  cut -f 1 | rev  > ${filename_kmerfile}
-        reformat.sh -Xmx${default="105G" memory} in=${filename_outfile} out1=${filename_outfile1} out2=${filename_outfile2}
+        if ${paired}; then
+            reformat.sh -Xmx${default="105G" memory} in=${filename_outfile} out1=${filename_outfile1} out2=${filename_outfile2}
+        fi
         readlength.sh -Xmx${default="105G" memory} in=${filename_outfile} out=${filename_readlen}
         rm $bbcms_input
      }
      output {
             File out = filename_outfile
-            File out1 = filename_outfile1
-            File out2 = filename_outfile2
+            File out1 = if paired then filename_outfile1 else filename_outfile
+            File out2 = if paired then filename_outfile2 else filename_outfile
             File outreadlen = filename_readlen
             File stdout = filename_outlog
             File stderr = filename_errlog

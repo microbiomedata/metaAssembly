@@ -31,7 +31,7 @@ workflow jgi_metaASM {
          input: scaffolds_in=assy.out, container=bbtools_container, rename_contig_prefix = rename_contig_prefix, memory=memory
     }
     call read_mapping_pairs {
-         input: reads=input_file, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads,  paired = paired
+         input: reads=stage.assembly_input, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads,  paired = paired
     }
 
     call finish_asm {
@@ -43,7 +43,7 @@ workflow jgi_metaASM {
         container="microbiomedata/workflowmeta:1.1.0",
         informed_by=informed_by,
         resource=resource,
-        input_file=input_file,
+        input_file=stage.assembly_input,
         fasta=create_agp.outcontigs,
         scaffold=create_agp.outscaffolds,
         agp=create_agp.outagp,
@@ -126,7 +126,6 @@ task finish_asm {
     String start
  
     command<<<
-
 
         set -e
         end=`date --iso-8601=seconds`
@@ -236,7 +235,6 @@ task read_mapping_pairs{
     Boolean paired = true
     String bbmap_interleaved_flag = if paired then 'interleaved=true' else 'interleaved=false'
 
-    String filename_resources="resources.log"
     String filename_unsorted="pairedMapped.bam"
     String filename_outsam="pairedMapped.sam.gz"
     String filename_sorted="pairedMapped_sorted.bam"
@@ -252,11 +250,6 @@ task read_mapping_pairs{
 	    maxRetries: 1
      }
     command{
-        echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
-        touch ${filename_resources};
-        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &
-        sleep 30
-        export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
         if [[ ${reads[0]}  == *.gz ]] ; then
              cat ${sep=" " reads} > infile.fastq.gz
@@ -270,7 +263,7 @@ task read_mapping_pairs{
         samtools sort -m100M -@ ${jvm_threads} ${filename_unsorted} -o ${filename_sorted}
         samtools index ${filename_sorted}
         reformat.sh -Xmx${default="105G" memory} in=${filename_unsorted} out=${filename_outsam} overwrite=true
-	ln ${filename_cov} mapping_stats.txt
+	    ln ${filename_cov} mapping_stats.txt
         rm $mapping_input
   }
   output{
@@ -278,7 +271,6 @@ task read_mapping_pairs{
       File outbamfileidx = filename_sorted_idx
       File outcovfile = filename_cov
       File outsamfile = filename_outsam
-      File outresources = filename_resources
   }
 }
 
@@ -287,7 +279,6 @@ task create_agp {
     String? memory
     String container
     String rename_contig_prefix
-    String filename_resources="resources.log"
     String prefix="assembly"
     String filename_contigs="${prefix}_contigs.fna"
     String filename_scaffolds="${prefix}_scaffolds.fna"
@@ -299,25 +290,19 @@ task create_agp {
 	    cpu:  16
      }
     command{
-	echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
-        touch ${filename_resources};
-        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &	
-        sleep 30
-        export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         fungalrelease.sh -Xmx${default="105G" memory} in=${scaffolds_in} out=${filename_scaffolds} outc=${filename_contigs} agp=${filename_agp} legend=${filename_legend} mincontig=200 minscaf=200 sortscaffolds=t sortcontigs=t overwrite=t
         if [ "${rename_contig_prefix}" != "scaffold" ]; then
             sed -i 's/scaffold/${rename_contig_prefix}_scf/g' ${filename_contigs} ${filename_scaffolds} ${filename_agp} ${filename_legend}
         fi
-	bbstats.sh format=8 in=${filename_scaffolds} out=stats.json
-	sed -i 's/l_gt50k/l_gt50K/g' stats.json
+        bbstats.sh format=8 in=${filename_scaffolds} out=stats.json
+        sed -i 's/l_gt50k/l_gt50K/g' stats.json
     }
     output{
 	File outcontigs = filename_contigs
 	File outscaffolds = filename_scaffolds
 	File outagp = filename_agp
 	File outstats = "stats.json"
-    	File outlegend = filename_legend
-    	File outresources = filename_resources
+    File outlegend = filename_legend
     }
 }
 
@@ -326,7 +311,6 @@ task assy {
      File infile2
      String container
      String? threads
-     String filename_resources="resources.log"
      String outprefix="spades3"
      String filename_outfile="${outprefix}/scaffolds.fasta"
      String filename_spadeslog ="${outprefix}/spades.log"
@@ -339,11 +323,6 @@ task assy {
 	    cpu:  16
      }
      command{
-        echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
-        touch ${filename_resources};
-        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &		
-        sleep 30
-        export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
         if ${paired}; then
             spades.py -m 2000 -o ${outprefix} --only-assembler -k 33,55,77,99,127  --meta -t ${spades_cpu} -1 ${infile1} -2 ${infile2}
@@ -354,7 +333,6 @@ task assy {
      output {
             File out = filename_outfile
             File outlog = filename_spadeslog
-            File outresources = filename_resources
      }
 }
 
@@ -364,7 +342,6 @@ task bbcms {
      String? memory
      Boolean paired = true
 
-     String filename_resources="resources.log"
      String filename_outfile="input.corr.fastq.gz"
      String filename_outfile1="input.corr.left.fastq.gz"
      String filename_outfile2="input.corr.right.fastq.gz"
@@ -380,17 +357,12 @@ task bbcms {
      }
 
      command {
-        echo $(curl --fail --max-time 10 --silent http://169.254.169.254/latest/meta-data/public-hostname)
-        touch ${filename_resources};
-        curl --fail --max-time 10 --silent https://bitbucket.org/berkeleylab/jgi-meta/get/master.tar.gz | tar --wildcards -zxvf - "*/bin/resources.bash" && ./*/bin/resources.bash > ${filename_resources} &		
-        sleep 30
-        export TIME="time result\ncmd:%C\nreal %es\nuser %Us \nsys  %Ss \nmemory:%MKB \ncpu %P"
         set -eo pipefail
         if file --mime -b ${input_files[0]} | grep gzip; then
              cat ${sep=" " input_files} > infile.fastq.gz
              export bbcms_input="infile.fastq.gz"
         fi
-	if file --mime -b ${input_files[0]} | grep plain; then
+	    if file --mime -b ${input_files[0]} | grep plain; then
              cat ${sep=" " input_files} > infile.fastq
              export bbcms_input="infile.fastq"
         fi
@@ -410,7 +382,6 @@ task bbcms {
             File stderr = filename_errlog
             File outcounts = filename_counts
             File outkmer = filename_kmerfile
-            File outresources = filename_resources
      }
 }
 

@@ -129,10 +129,16 @@ task finish_asm {
 
         set -e
         end=`date --iso-8601=seconds`
-        ln ${fasta} ${prefix}_contigs.fna
-        ln ${scaffold} ${prefix}_scaffolds.fna
-        ln ${covstats} ${prefix}_covstats.txt
-        ln ${agp} ${prefix}_assembly.agp
+        # ln ${fasta} ${prefix}_contigs.fna
+        # ln ${scaffold} ${prefix}_scaffolds.fna
+        # ln ${covstats} ${prefix}_covstats.txt
+        # ln ${agp} ${prefix}_assembly.agp
+
+        ##RE-ID
+        cat ${fasta} | sed ${sed} > ${assemdir}/${prefix}_contigs.fna
+        cat ${scaffold} | sed ${sed} > ${assemdir}/${prefix}_scaffolds.fna
+        cat ${covstats} | sed ${sed} > ${assemdir}/${prefix}_covstats.txt
+        cat ${agp} | sed ${sed} > ${assemdir}/${prefix}_assembly.agp
 
        ## Bam file     
        samtools view -h ${bam} | sed ${sed} | \

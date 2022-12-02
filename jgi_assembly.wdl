@@ -135,10 +135,10 @@ task finish_asm {
         # ln ${agp} ${prefix}_assembly.agp
 
         ##RE-ID
-        cat ${fasta} | sed ${sed} > ${assemdir}/${prefix}_contigs.fna
-        cat ${scaffold} | sed ${sed} > ${assemdir}/${prefix}_scaffolds.fna
-        cat ${covstats} | sed ${sed} > ${assemdir}/${prefix}_covstats.txt
-        cat ${agp} | sed ${sed} > ${assemdir}/${prefix}_assembly.agp
+        cat ${fasta} | sed ${sed} > {prefix}_contigs.fna
+        cat ${scaffold} | sed ${sed} > ${prefix}_scaffolds.fna
+        cat ${covstats} | sed ${sed} > ${prefix}_covstats.txt
+        cat ${agp} | sed ${sed} > ${prefix}_assembly.agp
 
        ## Bam file     
        samtools view -h ${bam} | sed ${sed} | \

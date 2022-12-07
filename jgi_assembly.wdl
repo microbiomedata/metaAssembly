@@ -43,7 +43,7 @@ workflow jgi_metaASM {
         container="microbiomedata/workflowmeta:1.1.0",
         informed_by=informed_by,
         resource=resource,
-        input_file=stage.assembly_input,
+        input_file=input_file,
         fasta=create_agp.outcontigs,
         scaffold=create_agp.outscaffolds,
         agp=create_agp.outagp,

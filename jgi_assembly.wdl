@@ -43,7 +43,7 @@ workflow jgi_metaASM {
         container="microbiomedata/workflowmeta:1.1.0",
         informed_by=informed_by,
         resource=resource,
-        input_file=stage.assembly_input,
+        input_file=input_file,
         fasta=create_agp.outcontigs,
         scaffold=create_agp.outscaffolds,
         agp=create_agp.outagp,
@@ -135,10 +135,10 @@ task finish_asm {
         # ln ${agp} ${prefix}_assembly.agp
 
         ##RE-ID
-        cat ${fasta} | sed ${sed} > ${assemdir}/${prefix}_contigs.fna
-        cat ${scaffold} | sed ${sed} > ${assemdir}/${prefix}_scaffolds.fna
-        cat ${covstats} | sed ${sed} > ${assemdir}/${prefix}_covstats.txt
-        cat ${agp} | sed ${sed} > ${assemdir}/${prefix}_assembly.agp
+        cat ${fasta} | sed ${sed} > ${prefix}_contigs.fna
+        cat ${scaffold} | sed ${sed} > ${prefix}_scaffolds.fna
+        cat ${covstats} | sed ${sed} > ${prefix}_covstats.txt
+        cat ${agp} | sed ${sed} > ${prefix}_assembly.agp
 
        ## Bam file     
        samtools view -h ${bam} | sed ${sed} | \

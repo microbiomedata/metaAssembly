@@ -152,19 +152,20 @@ task finish_asm {
 
 
        /scripts/generate_object_json.py \
-            --type "nmdc:MetagenomeAssembly" \
-            --set metagenome_assembly_set \ 
-            --part ${proj} \
+             --type "nmdc:MetagenomeAssembly" \
+             --set metagenome_assembly_set \ 
+             --part ${proj} \
              -p "name=Metagenome Assembly Activity for ${proj}" \
                 was_informed_by=${informed_by} \
                 started_at_time=${start} \
                 ended_at_time=$end \
                 execution_resource=${resource} \
                 git_url=${git_url} \
-            --url ${url_root}${proj}/assembly/ \
-            --extra stats.json \
-            --inputs ${input_file} \
-            --outputs \
+            
+             --url ${url_root}${proj}/qa/ \
+             --extra stats.json \
+             --inputs ${input_file} \
+             --outputs \
             ${prefix}_contigs.fna "Final assembly contigs fasta" "Assembly Contigs"\
             ${prefix}_scaffolds.fna "Final assembly scaffolds fasta" "Assembly Scaffolds"\
             ${prefix}_covstats.txt "Assembled contigs coverage information" "Assembly Coverage Stats"\

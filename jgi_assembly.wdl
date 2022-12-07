@@ -166,11 +166,11 @@ task finish_asm {
              --extra stats.json \
              --inputs ${input_file} \
              --outputs \
-            ${prefix}_contigs.fna "Final assembly contigs fasta" "Assembly Contigs"\
-            ${prefix}_scaffolds.fna "Final assembly scaffolds fasta" "Assembly Scaffolds"\
-            ${prefix}_covstats.txt "Assembled contigs coverage information" "Assembly Coverage Stats"\
-            ${prefix}_assembly.agp "An AGP format file that describes the assembly" "Assembly AGP"\
-            ${prefix}_pairedMapped_sorted.bam "Sorted bam file of reads mapping back to the final assembly" "Assembly Coverage BAM"
+             ${prefix}_contigs.fna "Final assembly contigs fasta" "Assembly Contigs"\
+             ${prefix}_scaffolds.fna "Final assembly scaffolds fasta" "Assembly Scaffolds"\
+             ${prefix}_covstats.txt "Assembled contigs coverage information" "Assembly Coverage Stats"\
+             ${prefix}_assembly.agp "An AGP format file that describes the assembly" "Assembly AGP"\
+             ${prefix}_pairedMapped_sorted.bam "Sorted bam file of reads mapping back to the final assembly" "Assembly Coverage BAM"
 
     >>>
     output {

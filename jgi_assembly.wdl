@@ -161,7 +161,7 @@ task finish_asm {
                 ended_at_time=$end \
                 execution_resource=${resource} \
                 git_url=${git_url} \
-            
+                version="v1.0.3-beta" \
              --url ${url_root}${proj}/qa/ \
              --extra stats.json \
              --inputs ${input_file} \

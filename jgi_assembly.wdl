@@ -40,10 +40,10 @@ workflow jgi_metaASM {
         start=stage.start,
         git_url=git_url,
         url_root=url_root,
-        container="microbiomedata/workflowmeta:1.1.0",
+        container="microbiomedata/workflowmeta:1.1.1",
         informed_by=informed_by,
         resource=resource,
-        input_file=input_file,
+        input_file=stage.assembly_input,
         fasta=create_agp.outcontigs,
         scaffold=create_agp.outscaffolds,
         agp=create_agp.outagp,
@@ -106,7 +106,7 @@ task stage {
 }
 
 task finish_asm {
-    String input_file
+    Array[File] input_file
     File fasta
     File scaffold
     File? agp
@@ -153,7 +153,7 @@ task finish_asm {
 
        /scripts/generate_object_json.py \
              --type "nmdc:MetagenomeAssembly" \
-             --set metagenome_assembly_set \ 
+             --set metagenome_assembly_set \
              --part ${proj} \
              -p "name=Metagenome Assembly Activity for ${proj}" \
                 was_informed_by=${informed_by} \
@@ -164,7 +164,7 @@ task finish_asm {
                 version="v1.0.3-beta" \
              --url ${url_root}${proj}/assembly/ \
              --extra stats.json \
-             --inputs ${input_file} \
+             --inputs ${input_file[0]} ${input_file[1]} \
              --outputs \
              ${prefix}_contigs.fna "Final assembly contigs fasta" "Assembly Contigs" \
              ${prefix}_scaffolds.fna "Final assembly scaffolds fasta" "Assembly Scaffolds" \

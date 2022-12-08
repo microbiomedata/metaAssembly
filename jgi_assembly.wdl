@@ -135,7 +135,7 @@ task finish_asm {
         # ln ${agp} ${prefix}_assembly.agp
 
         ##RE-ID
-        cat ${fasta} | sed ${sed} > {prefix}_contigs.fna
+        cat ${fasta} | sed ${sed} > ${prefix}_contigs.fna
         cat ${scaffold} | sed ${sed} > ${prefix}_scaffolds.fna
         cat ${covstats} | sed ${sed} > ${prefix}_covstats.txt
         cat ${agp} | sed ${sed} > ${prefix}_assembly.agp
@@ -162,14 +162,14 @@ task finish_asm {
                 execution_resource=${resource} \
                 git_url=${git_url} \
                 version="v1.0.3-beta" \
-             --url ${url_root}${proj}/qa/ \
+             --url ${url_root}${proj}/assembly/ \
              --extra stats.json \
              --inputs ${input_file} \
              --outputs \
-             ${prefix}_contigs.fna "Final assembly contigs fasta" "Assembly Contigs"\
-             ${prefix}_scaffolds.fna "Final assembly scaffolds fasta" "Assembly Scaffolds"\
-             ${prefix}_covstats.txt "Assembled contigs coverage information" "Assembly Coverage Stats"\
-             ${prefix}_assembly.agp "An AGP format file that describes the assembly" "Assembly AGP"\
+             ${prefix}_contigs.fna "Final assembly contigs fasta" "Assembly Contigs" \
+             ${prefix}_scaffolds.fna "Final assembly scaffolds fasta" "Assembly Scaffolds" \
+             ${prefix}_covstats.txt "Assembled contigs coverage information" "Assembly Coverage Stats" \
+             ${prefix}_assembly.agp "An AGP format file that describes the assembly" "Assembly AGP" \
              ${prefix}_pairedMapped_sorted.bam "Sorted bam file of reads mapping back to the final assembly" "Assembly Coverage BAM"
 
     >>>

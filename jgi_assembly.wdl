@@ -166,11 +166,11 @@ task finish_asm {
              --extra stats.json \
              --inputs ${input_file[0]} ${input_file[1]} \
              --outputs \
-             ${prefix}_contigs.fna "Final assembly contigs fasta" "Assembly Contigs" \
-             ${prefix}_scaffolds.fna "Final assembly scaffolds fasta" "Assembly Scaffolds" \
-             ${prefix}_covstats.txt "Assembled contigs coverage information" "Assembly Coverage Stats" \
-             ${prefix}_assembly.agp "An AGP format file that describes the assembly" "Assembly AGP" \
-             ${prefix}_pairedMapped_sorted.bam "Sorted bam file of reads mapping back to the final assembly" "Assembly Coverage BAM"
+             nmdc_mgasm0xxxx.1_contigs.fna "Final assembly contigs fasta" "Assembly Contigs" "Assembly contigs for ${proj}" \
+             nmdc_mgasm0xxxx.1_scaffolds.fna "Final assembly scaffolds fasta" "Assembly Scaffolds" "Assembly scaffolds for ${proj}" \
+             nmdc_mgasm0xxxx.1_covstats.txt "Assembled contigs coverage information" "Assembly Coverage Stats" "Coverage Stats for ${proj}" \
+             nmdc_mgasm0xxxx.1_assembly.agp "An AGP format file that describes the assembly" "Assembly AGP" "AGP for ${proj}" \
+             nmdc_mgasm0xxxx.1_pairedMapped_sorted.bam "Sorted bam file of reads mapping back to the final assembly" "Assembly Coverage BAM" "Sorted Bam for ${proj}"
 
     >>>
     output {

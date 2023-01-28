@@ -13,7 +13,7 @@ Description of the files:
 
 ## The Docker image and Dockerfile can be found here
 
-[microbiomedata/bbtools:38.94](https://hub.docker.com/r/microbiomedata/bbtools)
+[microbiomedata/bbtools:38.96](https://hub.docker.com/r/microbiomedata/bbtools)
 
 [microbiomedata/spades:3.15.0](https://hub.docker.com/r/microbiomedata/spades)
 
@@ -24,26 +24,23 @@ Description of the files:
     
 2. contig prefix for fasta header
     
-3. output path
+3. project name 
 
-4. input_interleaved (boolean)
+4. resource where run the workflow
 
-5. forwards reads fastq file (required value when input_interleaved is false, otherwise use [] )
+5. informed_by 
 
-6. reverse reads fastq file (required value when input_interleaved is false, otherwise use [] )
+6. memory (optional) ex: "jgi_metaASM.memory": "105G"
 
-7. memory (optional) ex: "jgi_metaASM.memory": "105G"
-
-8. threads (optional) ex: "jgi_metaASM.threads": "16"
+7. threads (optional) ex: "jgi_metaASM.threads": "16"
 
 ```
 {
-  "jgi_metaASM.input_file":["/global/cfs/projectdirs/m3408/ficus/11809.7.220839.TCCTGAG-ACTGCAT.fastq.gz"],
+  "jgi_metaASM.input_file":"/global/cfs/projectdirs/m3408/ficus/11809.7.220839.TCCTGAG-ACTGCAT.fastq.gz",
   "jgi_metaASM.rename_contig_prefix":"503125_160870",
-  "jgi_metaASM.outdir":"/global/cfs/projectdirs/m3408/aim2/metagenome/assembly/ficus/503125_160870",
-  "jgi_metaASM.input_interleaved":true,
-  "jgi_metaASM.input_fq1":[],
-  "jgi_metaASM.input_fq2":[],
+  "jgi_metaASM.proj":"nmdc:503125_160870",
+  "jgi_metaASM.resource": "NERSC -- perlmutter",
+  "jgi_metaASM.informed_by": "nmdc:xxxxxx",
   "jgi_metaASM.memory": "105G",
   "jgi_metaASM.threads": "16"
 }

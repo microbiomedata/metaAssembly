@@ -121,7 +121,7 @@ task make_info_file {
         spades_version=`grep  'SPAdes version' ${assy_info} | awk '{print $3}'`
         echo -e "The workflow takes paired-end reads runs error correction by bbcms.sh (BBTools(1) version $bbtools_version)." > ${prefix}_metaAsm.info
         echo -e "The clean reads are assembled by metaSpades(2) version $spades_version with parameters, --only-assembler -k 33,55,77,99,127  --meta" >> ${prefix}_metaAsm.info
-        echo -e "After assembly, Contigs and Scaffolds are consumed by the *create_agp* task to rename the FASTA header and generate an AGP format (https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/) file which describes the assembly"
+        echo -e "After assembly, Contigs and Scaffolds are consumed by the *create_agp* task to rename the FASTA header and generate an AGP format (https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/) file which describes the assembly"  >> ${prefix}_metaAsm.info
         echo -e "In the end, the reads are mapped back to contigs by bbmap (BBTools(1) version $bbtools_version) for coverage information." >> ${prefix}_metaAsm.info
 
         echo -e "\n(1) B. Bushnell: BBTools software package, http://bbtools.jgi.doe.gov/" >> ${prefix}_metaAsm.info

@@ -34,6 +34,9 @@ workflow jgi_metaASM {
          input: reads=stage.assembly_input, ref=create_agp.outcontigs, container=bbtools_container, memory=memory, threads=threads,  paired = paired
     }
 
+    call make_info_file {
+         input: bbcms_info= bbcms.outcounts, assy_info = assy.outlog, container=bbtools_container, proj=proj
+    }
     call finish_asm {
         input:
         proj=proj,
@@ -62,6 +65,7 @@ workflow jgi_metaASM {
         File covstats=finish_asm.outcovstats
         File asmstats=finish_asm.outasmstats
         File objects=finish_asm.objects
+        File asminfo=make_info_file.asminfo
     }
  
     meta {
@@ -103,6 +107,36 @@ task stage {
      maxRetries: 1
      docker: container
    }
+}
+
+task make_info_file {
+    File assy_info
+    File bbcms_info
+    String proj
+    String prefix=sub(proj, ":", "_")
+    String container
+
+    command<<<
+        bbtools_version=`grep BBToolsVer ${bbcms_info}| awk '{print $2}' | sed -e 's/"//g' -e 's/,//' `
+        spades_version=`grep  'SPAdes version' ${assy_info} | awk '{print $3}'`
+        echo -e "The workflow takes paired-end reads runs error correction by bbcms.sh (BBTools(1) version $bbtools_version)." > ${prefix}_metaAsm.info
+        echo -e "The clean reads are assembled by metaSpades(2) version $spades_version with parameters, --only-assembler -k 33,55,77,99,127  --meta" >> ${prefix}_metaAsm.info
+        echo -e "After assembly, Contigs and Scaffolds are consumed by the *create_agp* task to rename the FASTA header and generate an AGP format (https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/) file which describes the assembly"
+        echo -e "In the end, the reads are mapped back to contigs by bbmap (BBTools(1) version $bbtools_version) for coverage information." >> ${prefix}_metaAsm.info
+
+        echo -e "\n(1) B. Bushnell: BBTools software package, http://bbtools.jgi.doe.gov/" >> ${prefix}_metaAsm.info
+        echo -e "(2) Nurk S, Meleshko D, Korobeynikov A, Pevzner PA. metaSPAdes: a new versatile metagenomic assembler. Genome Res. 2017 May;27(5):824-834."  >> ${prefix}_metaAsm.info
+    >>>
+
+    output {
+        File asminfo = "${prefix}_metaAsm.info"
+    }
+    runtime {
+        memory: "1 GiB"
+        cpu:  1
+        maxRetries: 1
+        docker: container
+    }
 }
 
 task finish_asm {
@@ -174,13 +208,13 @@ task finish_asm {
 
     >>>
     output {
-       	File outcontigs = "${prefix}_contigs.fna"
-		File outscaffolds = "${prefix}_scaffolds.fna"
+        File outcontigs = "${prefix}_contigs.fna"
+        File outscaffolds = "${prefix}_scaffolds.fna"
         File outagp = "${prefix}_assembly.agp"
-		File outbam = "${prefix}_pairedMapped_sorted.bam"
-		File outsamgz = "${prefix}_pairedMapped.sam.gz"
-		File outcovstats = "${prefix}_covstats.txt"
-		File outasmstats = "stats.json"
+        File outbam = "${prefix}_pairedMapped_sorted.bam"
+        File outsamgz = "${prefix}_pairedMapped.sam.gz"
+        File outcovstats = "${prefix}_covstats.txt"
+        File outasmstats = "stats.json"
         File objects = "objects.json"
     }
 
@@ -209,28 +243,28 @@ task make_output{
         String asmstats_name=basename(contigs)
         String container
  
- 	command{
- 		if [ ! -z ${outdir} ]; then
- 			mkdir -p ${outdir}
- 			cp ${contigs} ${scaffolds} ${agp} ${bam} \
- 			   ${samgz} ${covstats} ${asmstats} ${outdir}
- 			chmod 764 -R ${outdir}
- 		fi
- 	}
-	runtime {
+    command{
+        if [ ! -z ${outdir} ]; then
+            mkdir -p ${outdir}
+            cp ${contigs} ${scaffolds} ${agp} ${bam} \
+               ${samgz} ${covstats} ${asmstats} ${outdir}
+            chmod 764 -R ${outdir}
+        fi
+    }
+    runtime {
                 docker: container
-		memory: "1 GiB"
-		cpu:  1
-	}
-	output{
-		File? outcontigs = "${outdir}/${contigs_name}"
-		File? outscaffolds = "${outdir}/${scaffolds_name}"
-		File? outagp = "${outdir}/${agp_name}"
-		File? outbam = "${outdir}/${bam_name}"
-		File? outsamgz = "${outdir}/${samgz_name}"
-		File? outcovstats = "${outdir}/${covstats_name}"
-		File? outasmstats = "${outdir}/${asmstats_name}"
-	}
+        memory: "1 GiB"
+        cpu:  1
+    }
+    output{
+        File? outcontigs = "${outdir}/${contigs_name}"
+        File? outscaffolds = "${outdir}/${scaffolds_name}"
+        File? outagp = "${outdir}/${agp_name}"
+        File? outbam = "${outdir}/${bam_name}"
+        File? outsamgz = "${outdir}/${samgz_name}"
+        File? outcovstats = "${outdir}/${covstats_name}"
+        File? outasmstats = "${outdir}/${asmstats_name}"
+    }
 }
 
 task read_mapping_pairs{
@@ -253,8 +287,8 @@ task read_mapping_pairs{
     runtime {
             docker: container
             memory: "120 GiB"
-	    cpu:  16
-	    maxRetries: 1
+        cpu:  16
+        maxRetries: 1
      }
     command{
         set -eo pipefail
@@ -270,7 +304,7 @@ task read_mapping_pairs{
         samtools sort -m100M -@ ${jvm_threads} ${filename_unsorted} -o ${filename_sorted}
         samtools index ${filename_sorted}
         reformat.sh -Xmx${default="105G" memory} in=${filename_unsorted} out=${filename_outsam} overwrite=true
-	    ln ${filename_cov} mapping_stats.txt
+        ln ${filename_cov} mapping_stats.txt
         rm $mapping_input
   }
   output{
@@ -294,7 +328,7 @@ task create_agp {
     runtime {
             docker: container
             memory: "120 GiB"
-	    cpu:  16
+        cpu:  16
      }
     command{
         fungalrelease.sh -Xmx${default="105G" memory} in=${scaffolds_in} out=${filename_scaffolds} outc=${filename_contigs} agp=${filename_agp} legend=${filename_legend} mincontig=200 minscaf=200 sortscaffolds=t sortcontigs=t overwrite=t
@@ -305,10 +339,10 @@ task create_agp {
         sed -i 's/l_gt50k/l_gt50K/g' stats.json
     }
     output{
-	File outcontigs = filename_contigs
-	File outscaffolds = filename_scaffolds
-	File outagp = filename_agp
-	File outstats = "stats.json"
+    File outcontigs = filename_contigs
+    File outscaffolds = filename_scaffolds
+    File outagp = filename_agp
+    File outstats = "stats.json"
     File outlegend = filename_legend
     }
 }
@@ -327,7 +361,7 @@ task assy {
      runtime {
             docker: container
             memory: "120 GiB"
-	    cpu:  16
+        cpu:  16
      }
      command{
         set -eo pipefail
@@ -360,7 +394,7 @@ task bbcms {
      runtime {
             docker: container
             memory: "120 GiB"
-	    cpu:  16
+        cpu:  16
      }
 
      command {
@@ -369,7 +403,7 @@ task bbcms {
              cat ${sep=" " input_files} > infile.fastq.gz
              export bbcms_input="infile.fastq.gz"
         fi
-	    if file --mime -b ${input_files[0]} | grep plain; then
+        if file --mime -b ${input_files[0]} | grep plain; then
              cat ${sep=" " input_files} > infile.fastq
              export bbcms_input="infile.fastq"
         fi
@@ -379,6 +413,7 @@ task bbcms {
         fi
         readlength.sh -Xmx${default="105G" memory} in=${filename_outfile} out=${filename_readlen}
         rm $bbcms_input
+        
      }
      output {
             File out = filename_outfile
@@ -389,6 +424,7 @@ task bbcms {
             File stderr = filename_errlog
             File outcounts = filename_counts
             File outkmer = filename_kmerfile
+            
      }
 }
 

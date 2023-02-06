@@ -8,7 +8,7 @@ workflow jgi_metaASM {
     String informed_by
     String rename_contig_prefix="scaffold"
     Float uniquekmer=1000
-    String?  git_url="https://github.com/microbiomedata/mg_annotation/releases/tag/0.1"
+    String?  git_url="https://github.com/microbiomedata/metaAssembly"
     String?  url_root="https://data.microbiomedata.org/data/"
     String bbtools_container="microbiomedata/bbtools:38.96"
     String spades_container="microbiomedata/spades:3.15.0"
@@ -147,9 +147,9 @@ task finish_asm {
        samtools view -h ${samgz} | sed ${sed} | \
           gzip -c - > ${prefix}_pairedMapped.sam.gz
 
-       # Remove an extra field from the stats
-       cat ${asmstats} |jq 'del(.filename)' > stats.json
-
+       # Fix field names
+       cat ${asmstats} |tr 'A-Z' 'a-z'| \
+              jq 'del(.filename)' > stats.json
 
        /scripts/generate_object_json.py \
              --type "nmdc:MetagenomeAssembly" \
@@ -175,12 +175,12 @@ task finish_asm {
     >>>
     output {
        	File outcontigs = "${prefix}_contigs.fna"
-		File outscaffolds = "${prefix}_scaffolds.fna"
+	File outscaffolds = "${prefix}_scaffolds.fna"
         File outagp = "${prefix}_assembly.agp"
-		File outbam = "${prefix}_pairedMapped_sorted.bam"
-		File outsamgz = "${prefix}_pairedMapped.sam.gz"
-		File outcovstats = "${prefix}_covstats.txt"
-		File outasmstats = "stats.json"
+	File outbam = "${prefix}_pairedMapped_sorted.bam"
+	File outsamgz = "${prefix}_pairedMapped.sam.gz"
+	File outcovstats = "${prefix}_covstats.txt"
+	File outasmstats = "stats.json"
         File objects = "objects.json"
     }
 

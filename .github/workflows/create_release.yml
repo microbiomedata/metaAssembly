@@ -36,6 +36,6 @@ jobs:
         run: zip -r bundle.zip *.wdl
 
       - name: Create Release
-        run: gh release create v${{ steps.bump_version.outputs.NEW_VERSION }} jgi_assembly.wdl bundle.zip
+        run: gh release create ${{ steps.bump_version.outputs.NEW_VERSION }} jgi_assembly.wdl bundle.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

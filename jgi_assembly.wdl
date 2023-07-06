@@ -4,12 +4,8 @@ workflow jgi_metaASM {
     String? threads
     String input_file
     String proj
-    String resource
-    String informed_by
     String rename_contig_prefix="scaffold"
     Float uniquekmer=1000
-    String?  git_url="https://github.com/microbiomedata/mg_annotation/releases/tag/0.1"
-    String?  url_root="https://data.microbiomedata.org/data/"
     String bbtools_container="microbiomedata/bbtools:38.96"
     String spades_container="microbiomedata/spades:3.15.0"
     Boolean paired = true
@@ -41,11 +37,7 @@ workflow jgi_metaASM {
         input:
         proj=proj,
         start=stage.start,
-        git_url=git_url,
-        url_root=url_root,
         container="microbiomedata/workflowmeta:1.1.1",
-        informed_by=informed_by,
-        resource=resource,
         input_file=input_file,
         fasta=create_agp.outcontigs,
         scaffold=create_agp.outscaffolds,
@@ -64,7 +56,6 @@ workflow jgi_metaASM {
         File samgz=finish_asm.outsamgz
         File covstats=finish_asm.outcovstats
         File asmstats=finish_asm.outasmstats
-        File objects=finish_asm.objects
         File asminfo=make_info_file.asminfo
     }
  
@@ -149,14 +140,10 @@ task finish_asm {
     File? covstats
     File asmstats
     String container
-    String git_url
-    String informed_by
     String proj
     String prefix=sub(proj, ":", "_")
     String orig_prefix="scaffold"
     String sed="s/${orig_prefix}_/${proj}_/g"
-    String resource
-    String url_root
     String start
  
     command<<<
@@ -184,28 +171,6 @@ task finish_asm {
        # Remove an extra field from the stats
        cat ${asmstats} |jq 'del(.filename)' > stats.json
 
-
-       /scripts/generate_object_json.py \
-             --type "nmdc:MetagenomeAssembly" \
-             --set metagenome_assembly_set \
-             --part ${proj} \
-             -p "name=Metagenome Assembly Activity for ${proj}" \
-                was_informed_by=${informed_by} \
-                started_at_time=${start} \
-                ended_at_time=$end \
-                execution_resource=${resource} \
-                git_url=${git_url} \
-                version="v1.0.3-beta" \
-             --url ${url_root}${proj}/assembly/ \
-             --extra stats.json \
-             --inputs ${input_file[0]} ${input_file[1]} \
-             --outputs \
-             ${prefix}_contigs.fna "Final assembly contigs fasta" "Assembly Contigs" "Assembly contigs for ${proj}" \
-             ${prefix}_scaffolds.fna "Final assembly scaffolds fasta" "Assembly Scaffolds" "Assembly scaffolds for ${proj}" \
-             ${prefix}_covstats.txt "Assembled contigs coverage information" "Assembly Coverage Stats" "Coverage Stats for ${proj}" \
-             ${prefix}_assembly.agp "An AGP format file that describes the assembly" "Assembly AGP" "AGP for ${proj}" \
-             ${prefix}_pairedMapped_sorted.bam "Sorted bam file of reads mapping back to the final assembly" "Assembly Coverage BAM" "Sorted Bam for ${proj}"
-
     >>>
     output {
         File outcontigs = "${prefix}_contigs.fna"
@@ -215,7 +180,6 @@ task finish_asm {
         File outsamgz = "${prefix}_pairedMapped.sam.gz"
         File outcovstats = "${prefix}_covstats.txt"
         File outasmstats = "stats.json"
-        File objects = "objects.json"
     }
 
     runtime {
@@ -382,7 +346,6 @@ task bbcms {
      String container
      String? memory
      Boolean paired = true
-
      String filename_outfile="input.corr.fastq.gz"
      String filename_outfile1="input.corr.left.fastq.gz"
      String filename_outfile2="input.corr.right.fastq.gz"

@@ -38,7 +38,6 @@ workflow jgi_metaASM {
         proj=proj,
         start=stage.start,
         container="microbiomedata/workflowmeta:1.1.1",
-        input_file=input_file,
         fasta=create_agp.outcontigs,
         scaffold=create_agp.outscaffolds,
         agp=create_agp.outagp,
@@ -131,7 +130,6 @@ task make_info_file {
 }
 
 task finish_asm {
-    Array[File] input_file
     File fasta
     File scaffold
     File? agp

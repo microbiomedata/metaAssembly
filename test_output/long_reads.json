@@ -1,0 +1,14 @@
+{
+    "metaflye.input_fastq":["SRR13128014.pacbio.subsample.ccs.fastq.gz"],
+    "metaflye.flye_container":"staphb/flye:2.9.2",
+    "metaflye.flye_parameters":"--meta -o flye -t 32 --pacbio-hifi",
+    "metaflye.smrtlink_container":"bryce911/smrtlink:12.0.0.177059",
+    "metaflye.racon_container":"staphb/racon:1.4.20",
+    "metaflye.minimap2_container":"staphb/minimap2:2.25",
+    "metaflye.minimap2_parameters":"-a -x map-hifi -t 32",
+    "metaflye.samtools_container":"staphb/samtools:1.18",
+    "metaflye.bbtools_container":"microbiomedata/bbtools:38.96",
+    "metaflye.bc_container":"doejgi/bc:1.07.1",
+    "metaflye.combined_fastq_filename":"reads.fastq.gz",
+    "metaflye.flye_memory":"115G"
+}

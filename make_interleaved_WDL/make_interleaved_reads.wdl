@@ -1,7 +1,10 @@
+# Make interleaved workflows for QC, etc.
+version 1.0
 workflow make_interleaved_reads {
+	input{
 	Array[File] input_files
 	String output_file = "interleaved.fastq.gz"
-	
+	}
 	call interleave_reads {
 		input: input_files = input_files, output_file = output_file
 	}
@@ -21,15 +24,15 @@ workflow make_interleaved_reads {
 }
 
 task interleave_reads{
-
+	input{
 	Array[File] input_files
 	String output_file = "interleaved.fastq.gz"
-	
+	}
 	command <<<
-	    if file --mime -b ${input_files[0]} | grep gzip; then 
-			paste <(gunzip -c ${input_files[0]} | paste - - - -) <(gunzip -c ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
+		if file --mime -b ~{input_files[0]} | grep gzip; then 
+			paste <(gunzip -c ~{input_files[0]} | paste - - - -) <(gunzip -c ~{input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ~{output_file}
 		else
-			paste <(cat ${input_files[0]} | paste - - - -) <(cat ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
+			paste <(cat ~{input_files[0]} | paste - - - -) <(cat ~{input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ~{output_file}
 		fi
 
 	>>>

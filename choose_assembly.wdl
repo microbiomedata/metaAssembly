@@ -8,7 +8,6 @@ workflow jgi_assembly{
         # shortReads parameters
         String? memory
         String? threads
-        File input_file
         String proj
         # longReads parameters
         Array[File] input_fastq
@@ -27,7 +26,7 @@ workflow jgi_assembly{
             input:
             memory = memory,
             threads = threads,
-            input_file = input_file,
+            input_file = input_fastq[0],
             proj = proj
 
         }

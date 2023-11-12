@@ -1,7 +1,8 @@
 version 1.0
 import "jgi_assembly.wdl" as srma
-import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
+import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/blob/master/metagenome_improved/metaflye.wdl" as lrma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
+# import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
 
 workflow jgi_assembly{
     input {  
@@ -54,6 +55,7 @@ workflow jgi_assembly{
         }
     }
     output {
+        # long reads output
         File? final_contigs = metaflye.final_contigs
         File? final_bam = metaflye.final_bam 
         File? final_scaffolds = metaflye.final_scaffolds
@@ -66,6 +68,7 @@ workflow jgi_assembly{
         File? final_summary_stats = metaflye.final_summary_stats
         File? final_pileup_out = metaflye.final_pileup_out
 
+        # short reads output
         File? contig=jgi_metaASM.contig
         File? scaffold=jgi_metaASM.scaffold
         File? agp=jgi_metaASM.agp

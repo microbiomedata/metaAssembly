@@ -6,7 +6,9 @@ workflow make_interleaved_reads {
 	String output_file = "interleaved.fastq.gz"
 	}
 	call interleave_reads {
-		input: input_files = input_files, output_file = output_file
+		input: 
+		input_files = input_files, 
+		output_file = output_file
 	}
 	output {
 		File interleaved_fastq = interleave_reads.out_fastq

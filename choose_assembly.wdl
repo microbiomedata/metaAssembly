@@ -1,6 +1,7 @@
 version 1.0
 import "jgi_assembly.wdl" as srma
 import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
+import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
 
 workflow jgi_assembly{
     input {  
@@ -8,7 +9,6 @@ workflow jgi_assembly{
         # shortReads parameters
         String? memory
         String? threads
-        File input_file
         String proj
         # longReads parameters
         Array[File] input_fastq
@@ -22,15 +22,22 @@ workflow jgi_assembly{
         String bbtools_container
     }
 
+    if (length(input_fastq) > 1){
+        call int.make_interleaved_reads{
+            input:
+            input_files = input_fastq
+        }
+    }
+
     if (shortRead) {
         call srma.jgi_metaASM{
             input:
             memory = memory,
             threads = threads,
-            input_file = input_file,
+            input_file = if length(input_fastq) > 1 then make_interleaved_reads.interleaved_fastq else input_fastq[0],
             proj = proj
-
         }
+        
     }
     if (!shortRead) {
         call lrma.metaflye{

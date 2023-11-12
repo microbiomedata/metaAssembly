@@ -4,7 +4,7 @@ workflow jgi_metaASM {
         # String? outdir
         String? memory
         String? threads
-        File input_file
+        File? input_file
         String proj
         String prefix=sub(proj, ":", "_")
         String rename_contig_prefix="scaffold"
@@ -117,7 +117,7 @@ workflow jgi_metaASM {
 task stage {
    input{ 
    String container
-   File input_file
+   File? input_file
    String memory = "4G"
    String target = "staged.fastq.gz"
    String output1 = "input.left.fastq.gz"

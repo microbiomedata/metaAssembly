@@ -1,8 +1,8 @@
 version 1.0
 import "jgi_assembly.wdl" as srma
-import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/blob/master/metagenome_improved/metaflye.wdl" as lrma
+#import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/blob/master/metagenome_improved/metaflye.wdl" as lrma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
-# import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
+import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
 
 workflow jgi_assembly{
     input {  
@@ -23,14 +23,14 @@ workflow jgi_assembly{
         String bbtools_container
     }
 
-    if (length(input_fastq) > 1){
-        call int.make_interleaved_reads{
-            input:
-            input_files = input_fastq
-        }
-    }
 
     if (shortRead) {
+    	if (length(input_fastq) > 1){
+        	call int.make_interleaved_reads{
+			input:
+			input_files = input_fastq
+       		}
+    	}
         call srma.jgi_metaASM{
             input:
             memory = memory,

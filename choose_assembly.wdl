@@ -27,7 +27,8 @@ workflow jgi_assembly{
     	if (length(input_fastq) > 1){
         	call int.make_interleaved_reads{
 			input:
-			input_files = input_fastq
+			input_files = input_fastq,
+            container = bbtools_container
        		}
     	}
         call srma.jgi_metaASM{
@@ -35,7 +36,8 @@ workflow jgi_assembly{
             memory = memory,
             threads = threads,
             input_file = if length(input_fastq) > 1 then make_interleaved_reads.interleaved_fastq else input_fastq[0],
-            proj = proj
+            proj = proj,
+            bbtools_container = bbtools_container
 
         }
         

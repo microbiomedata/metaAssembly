@@ -1,8 +1,7 @@
 version 1.0
 import "jgi_assembly.wdl" as srma
-import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/blob/master/metagenome_improved/metaflye.wdl" as lrma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
-# import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
+import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
 
 workflow jgi_assembly{
     input {  
@@ -13,14 +12,14 @@ workflow jgi_assembly{
         String proj
         # longReads parameters
         Array[File] input_fastq
-        String flye_container
-        String flye_parameters
-        String smrtlink_container
-        String racon_container
-        String minimap2_container
-        String minimap2_parameters
-        String samtools_container
-        String bbtools_container
+        String flye_container = "staphb/flye:2.9.2"
+        String flye_parameters = "--meta -o flye -t 32 --pacbio-hifi"
+        String smrtlink_container = "bryce911/smrtlink:12.0.0.177059"
+        String racon_container = "staphb/racon:1.4.20"
+        String minimap2_container = "staphb/minimap2:2.25"
+        String minimap2_parameters = "-a -x map-hifi -t 32"
+        String samtools_container = "staphb/samtools:1.18"
+        String bbtools_container = "microbiomedata/bbtools:38.96"
     }
 
     if (length(input_fastq) > 1){
@@ -37,6 +36,7 @@ workflow jgi_assembly{
             threads = threads,
             input_file = if length(input_fastq) > 1 then make_interleaved_reads.interleaved_fastq else input_fastq[0],
             proj = proj
+
         }
         
     }

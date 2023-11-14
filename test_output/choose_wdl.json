@@ -1,5 +1,5 @@
 {
     "jgi_assembly.shortRead": "True",
-    "jgi_assembly.input_fastq":["https://data.microbiomedata.org/data/nmdc:omprc-11-0011q207/nmdc:wfmsa-11-gb7n3r07.1/52644.2.406985.ATGGGTCT-CCCAGATA.fastq.gz"],
+    "jgi_assembly.input_fastq":["/home/kli/Documents/metaAssembly/test_output/test.1.fastq", "/home/kli/Documents/metaAssembly/test_output/test.2.fastq"],
     "jgi_assembly.proj":"nmdc:xxxxxxx"
 }

@@ -380,7 +380,7 @@ task assy {
      runtime {
             docker: container
             memory: "120 GiB"
-        cpu:  16
+            cpu:  16
      }
      command{
         set -eo pipefail

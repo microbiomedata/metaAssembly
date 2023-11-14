@@ -1,5 +1,5 @@
 {
     "jgi_assembly.shortRead": "True",
-    "jgi_assembly.input_fastq":["/home/kli/Documents/metaAssembly/test_output/test.1.fastq", "/home/kli/Documents/metaAssembly/test_output/test.2.fastq"],
+    "jgi_assembly.input_fastq":["/expanse/projects/nmdc/edge_app/test/kli/metaAssembly/test_output/test.1.fastq", "/expanse/projects/nmdc/edge_app/test/kli/metaAssembly/test_output/test.2.fastq"],
     "jgi_assembly.proj":"nmdc:xxxxxxx"
 }

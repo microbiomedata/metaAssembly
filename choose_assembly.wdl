@@ -22,14 +22,14 @@ workflow jgi_assembly{
         String bbtools_container = "microbiomedata/bbtools:38.96"
     }
 
-    if (length(input_fastq) > 1){
-        call int.make_interleaved_reads{
-            input:
-            input_files = input_fastq
-        }
-    }
 
     if (shortRead) {
+    	if (length(input_fastq) > 1){
+        	call int.make_interleaved_reads{
+			input:
+			input_files = input_fastq
+       		}
+    	}
         call srma.jgi_metaASM{
             input:
             memory = memory,

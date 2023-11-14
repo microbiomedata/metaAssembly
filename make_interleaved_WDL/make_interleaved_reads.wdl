@@ -4,11 +4,13 @@ workflow make_interleaved_reads {
 	input{
 	Array[File] input_files
 	String output_file = "interleaved.fastq.gz"
+	String container="microbiomedata/bbtools:38.96"
 	}
 	call interleave_reads {
 		input: 
 		input_files = input_files, 
-		output_file = output_file
+		output_file = output_file,
+		container = container
 	}
 	output {
 		File interleaved_fastq = interleave_reads.out_fastq
@@ -29,6 +31,7 @@ task interleave_reads{
 	input{
 	Array[File] input_files
 	String output_file = "interleaved.fastq.gz"
+	String container
 	}
 	command <<<
 		if file --mime -b ~{input_files[0]} | grep gzip; then 
@@ -40,7 +43,7 @@ task interleave_reads{
 	>>>
 	
 	runtime {
-		#docker: "my_image"
+		docker: container
 	}
 	
 	output {

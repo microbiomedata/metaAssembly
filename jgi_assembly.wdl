@@ -12,12 +12,13 @@ workflow jgi_metaASM {
         String bbtools_container="microbiomedata/bbtools:38.96"
         String spades_container="microbiomedata/spades:3.15.0"
         String worflowmeta_container="microbiomedata/workflowmeta:1.1.1"
+        String  stage_container="mbabinski17/gcputils:0.1"
         Boolean paired = true
         }
 
     call stage {
         input:
-        container=bbtools_container,
+        container=stage_container,
         input_file=input_file
     }
 
@@ -115,41 +116,44 @@ workflow jgi_metaASM {
 }
 
 task stage {
-   input{ 
-   String container
-   File? input_file
-   String memory = "4G"
-   String target = "staged.fastq.gz"
-   String output1 = "input.left.fastq.gz"
-   String output2 = "input.right.fastq.gz"}
+    input{
+    String container
+    File? input_file
+    String memory = "4G"
+    String target = "staged.fastq.gz"
+    String output1 = "input.left.fastq.gz"
+    String output2 = "input.right.fastq.gz"}
 
-   command <<<
-       set -e
-       if [ $( echo ~{input_file}|egrep -c "https*:") -gt 0 ] ; then
-           wget ~{input_file} -O ~{target}
-       else
-           ln ~{input_file} ~{target} || cp ~{input_file} ~{target}
-       fi
+    command <<<
+        set -e
+        if [ $(echo ~{input_file} | egrep -c "^https*://") -gt 0 ] ; then
+            wget ~{input_file} -O ~{target}
+        # Check if the input file is a Google Cloud Storage URL
+        elif [ $(echo ~{input_file} | egrep -c "^gs://") -gt 0 ] ; then
+            gsutil cp ~{input_file} ${target}
+        else
+            ln ~{input_file} ~{target} || cp ~{input_file} ~{target}
+        fi
 
         reformat.sh \
         ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx10G" }\
         in=~{target} \
         out1=~{output1} \
         out2=~{output2}    
-       # Capture the start time
-       date --iso-8601=seconds > start.txt
+        # Capture the start time
+        date --iso-8601=seconds > start.txt
 
-   >>>
+    >>>
 
-   output{
-      Array[File] assembly_input = [output1, output2]
-      String start = read_string("start.txt")
-   }
-   runtime {
-     cpu:  2
-     maxRetries: 1
-     docker: container
-   }
+    output{
+        Array[File] assembly_input = [output1, output2]
+        String start = read_string("start.txt")
+    }
+    runtime {
+        cpu:  2
+        maxRetries: 1
+        docker: container
+    }
 }
 
 task make_info_file {

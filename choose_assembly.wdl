@@ -3,7 +3,7 @@ import "jgi_assembly.wdl" as srma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
 import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
 
-workflow jgi_assembly{
+workflow jgi_metaAssembly{
     input {  
         Boolean shortRead
         # shortReads parameters
@@ -45,6 +45,7 @@ workflow jgi_assembly{
     if (!shortRead) {
         call lrma.metaflye{
             input:
+            proj = proj,
             input_fastq = input_fastq,
             flye_container = flye_container,
             flye_parameters = flye_parameters,

@@ -1,5 +1,5 @@
 {
-    "jgi_assembly.shortRead": false,
-    "jgi_assembly.input_fastq":["/expanse/projects/nmdc/edge_app/test/kli/metaAssembly/test_output/SRR13128014.pacbio.subsample.ccs.fastq.gz"],
-    "jgi_assembly.proj":"nmdc:xxxxxxx"
+    "jgi_metaAssembly.shortRead": false,
+    "jgi_metaAssembly.input_fastq":["/expanse/projects/nmdc/edge_app/test/kli/metaAssembly/test_output/SRR13128014.pacbio.subsample.ccs.fastq.gz"],
+    "jgi_metaAssembly.proj":"nmdc:xxxxxxx"
 }

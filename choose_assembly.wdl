@@ -12,7 +12,7 @@ workflow jgi_metaAssembly{
         String? memory
         String? threads
         # longReads parameters
-        Array[File] input_fastq
+        Array[File] input_files
         String flye_container = "staphb/flye:2.9.2"
         String flye_parameters = "--meta -o flye -t 32 --pacbio-hifi"
         String smrtlink_container = "bryce911/smrtlink:12.0.0.177059"
@@ -25,10 +25,10 @@ workflow jgi_metaAssembly{
 
 
     if (shortRead) {
-    	if (length(input_fastq) > 1){
+    	if (length(input_files) > 1){
         	call int.make_interleaved_reads{
 			input:
-			input_files = input_fastq,
+			input_files = input_files,
             container = bbtools_container
        		}
     	}
@@ -36,7 +36,7 @@ workflow jgi_metaAssembly{
             input:
             memory = memory,
             threads = threads,
-            input_file = if length(input_fastq) > 1 then make_interleaved_reads.interleaved_fastq else input_fastq[0],
+            input_file = if length(input_files) > 1 then make_interleaved_reads.interleaved_fastq else input_files[0],
             proj = proj,
             bbtools_container = bbtools_container
 
@@ -47,7 +47,7 @@ workflow jgi_metaAssembly{
         call lrma.metaflye{
             input:
             proj = proj,
-            input_fastq = input_fastq,
+            input_fastq = input_files,
             flye_container = flye_container,
             flye_parameters = flye_parameters,
             smrtlink_container = smrtlink_container, 

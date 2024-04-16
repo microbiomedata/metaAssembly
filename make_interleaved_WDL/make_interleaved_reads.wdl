@@ -34,6 +34,7 @@ task interleave_reads{
 	String container
 	}
 	command <<<
+		set -euo pipefail
 		if file --mime -b ~{input_files[0]} | grep gzip; then 
 			paste <(gunzip -c ~{input_files[0]} | paste - - - -) <(gunzip -c ~{input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ~{output_file}
 		else

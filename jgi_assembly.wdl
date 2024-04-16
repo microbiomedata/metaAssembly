@@ -124,11 +124,11 @@ task stage {
    String output2 = "input.right.fastq.gz"}
 
    command <<<
-       set -e
+       set -euo pipefail
        if [ $( echo ~{input_file}|egrep -c "https*:") -gt 0 ] ; then
            wget ~{input_file} -O ~{target}
        else
-           ln ~{input_file} ~{target} || cp ~{input_file} ~{target}
+           ln -s ~{input_file} ~{target} || cp ~{input_file} ~{target}
        fi
 
         reformat.sh \
@@ -161,6 +161,7 @@ task make_info_file {
     }
 
     command<<<
+        set -euo pipefail
         bbtools_version=`grep BBToolsVer ~{bbcms_info}| awk '{print $2}' | sed -e 's/"//g' -e 's/,//' `
         spades_version=`grep  'SPAdes version' ~{assy_info} | awk '{print $3}'`
         echo -e "The workflow takes paired-end reads runs error correction by bbcms.sh (BBTools(1) version $bbtools_version)." > ~{prefix}_metaAsm.info
@@ -201,12 +202,12 @@ task finish_asm {
     }
     command<<<
 
-        set -e
+        set -euo pipefail
         end=`date --iso-8601=seconds`
-        # ln ~{fasta} ~{prefix}_contigs.fna
-        # ln ~{scaffold} ~{prefix}_scaffolds.fna
-        # ln ~{covstats} ~{prefix}_covstats.txt
-        # ln ~{agp} ~{prefix}_assembly.agp
+        # ln -s ~{fasta} ~{prefix}_contigs.fna
+        # ln -s ~{scaffold} ~{prefix}_scaffolds.fna
+        # ln -s ~{covstats} ~{prefix}_covstats.txt
+        # ln -s ~{agp} ~{prefix}_assembly.agp
 
         ##RE-ID
         cat ~{fasta} | sed ~{sed} > ~{prefix}_contigs.fna
@@ -269,7 +270,7 @@ task read_mapping_pairs{
         maxRetries: 1
      }
     command{
-        set -eo pipefail
+        set -euo pipefail
         if [[ ~{reads[0]}  == *.gz ]] ; then
              cat ~{sep=" " reads} > infile.fastq.gz
              export mapping_input="infile.fastq.gz"
@@ -306,7 +307,7 @@ task read_mapping_pairs{
         out=~{filename_outsam} \
         overwrite=true
 
-        ln ~{filename_cov} mapping_stats.txt
+        ln -s ~{filename_cov} mapping_stats.txt
         rm $mapping_input
   }
   output{
@@ -335,6 +336,7 @@ task create_agp {
         cpu:  16
      }
     command{
+        set -euo pipefail
         fungalrelease.sh \
         ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx105G" } \
         in=~{scaffolds_in} \
@@ -383,7 +385,7 @@ task assy {
             cpu:  16
      }
      command{
-        set -eo pipefail
+        set -euo pipefail
         if ~{paired}; then
             spades.py \
             -m 2000 \
@@ -432,7 +434,7 @@ task bbcms {
      }
 
      command {
-        set -eo pipefail
+        set -euo pipefail
         if file --mime -b ~{input_files[0]} | grep gzip; then
              cat ~{sep=" " input_files} > infile.fastq.gz
              export bbcms_input="infile.fastq.gz"

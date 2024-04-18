@@ -47,6 +47,7 @@ task prepare {
    String url
    }
    command <<<
+   set -euo pipefail
        wget -O "input.fastq.gz" ~{url}
        wget -O "ref_json.json" ~{ref_json}
    >>>
@@ -68,6 +69,7 @@ task validate {
    File user_json
    }
    command <<<
+      set -euo pipefail
        compare_json.py -i ~{refjson} -f ~{user_json}
    >>>
    output {

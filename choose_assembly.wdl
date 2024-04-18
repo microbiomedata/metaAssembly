@@ -129,9 +129,9 @@ task finish_lrasm {
 
         set -oeu pipefail
         end=`date --iso-8601=seconds`
-        ln ~{output_file} ~{prefix}_read_count_report.txt
-        ln ~{stats} ~{prefix}_contigs.sam.stats
-        ln ~{summary_stats} ~{prefix}_summary.stats
+        ln -s ~{output_file} ~{prefix}_read_count_report.txt
+        ln -s ~{stats} ~{prefix}_contigs.sam.stats
+        ln -s ~{summary_stats} ~{prefix}_summary.stats
 
         ##RE-ID
         cat ~{contigs} | sed ~{sed} > ~{prefix}_contigs.fna

@@ -1,9 +1,16 @@
+# Make interleaved workflows for QC, etc.
+version 1.0
 workflow make_interleaved_reads {
+	input{
 	Array[File] input_files
 	String output_file = "interleaved.fastq.gz"
-	
+	String container="microbiomedata/bbtools:38.96"
+	}
 	call interleave_reads {
-		input: input_files = input_files, output_file = output_file
+		input: 
+		input_files = input_files, 
+		output_file = output_file,
+		container = container
 	}
 	output {
 		File interleaved_fastq = interleave_reads.out_fastq
@@ -21,21 +28,23 @@ workflow make_interleaved_reads {
 }
 
 task interleave_reads{
-
+	input{
 	Array[File] input_files
 	String output_file = "interleaved.fastq.gz"
-	
+	String container
+	}
 	command <<<
-	    if file --mime -b ${input_files[0]} | grep gzip; then 
-			paste <(gunzip -c ${input_files[0]} | paste - - - -) <(gunzip -c ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
+		set -euo pipefail
+		if file --mime -b ~{input_files[0]} | grep gzip; then 
+			paste <(gunzip -c ~{input_files[0]} | paste - - - -) <(gunzip -c ~{input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ~{output_file}
 		else
-			paste <(cat ${input_files[0]} | paste - - - -) <(cat ${input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ${output_file}
+			paste <(cat ~{input_files[0]} | paste - - - -) <(cat ~{input_files[1]} | paste - - - -) | tr '\t' '\n' | gzip -c > ~{output_file}
 		fi
 
 	>>>
 	
 	runtime {
-		#docker: "my_image"
+		docker: container
 	}
 	
 	output {

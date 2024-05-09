@@ -104,6 +104,9 @@ workflow jgi_metaASM {
         File covstats=finish_asm.outcovstats
         File asmstats=finish_asm.outasmstats
         File asminfo=make_info_file.asminfo
+        File bbcms_fastq = bbcms.out
+        File bbcms_left_fastq = bbcms.out1
+        File bbcms_right_fastq = bbcms.out2
     }
  
     meta {

@@ -99,6 +99,9 @@ workflow jgi_metaAssembly{
         File? sr_covstats=jgi_metaASM.covstats
         File? sr_asmstats=jgi_metaASM.asmstats
         File? sr_asminfo=jgi_metaASM.asminfo
+        File? sr_bbcms_fq = jgi_metaASM.bbcms_fastq 
+        File? sr_bbcms_fql = jgi_metaASM.bbcms_left_fastq 
+        File? sr_bbcms_fqr = jgi_metaASM.bbcms_right_fastq 
 
           
     }

@@ -4,7 +4,7 @@ workflow jgi_metaASM {
         # String? outdir
         String? memory
         String? threads
-        File? input_file
+        String? input_file
         String proj
         String prefix=sub(proj, ":", "_")
         String rename_contig_prefix="scaffold"
@@ -72,7 +72,8 @@ workflow jgi_metaASM {
         bam=read_mapping_pairs.outbamfile,
         samgz=read_mapping_pairs.outsamfile,
         covstats=read_mapping_pairs.outcovfile,
-        asmstats=create_agp.outstats
+        asmstats=create_agp.outstats,
+        bbcms_fastq = bbcms.out
     }
 
     # call make_output{
@@ -104,9 +105,7 @@ workflow jgi_metaASM {
         File covstats=finish_asm.outcovstats
         File asmstats=finish_asm.outasmstats
         File asminfo=make_info_file.asminfo
-        File bbcms_fastq = bbcms.out
-        File bbcms_left_fastq = bbcms.out1
-        File bbcms_right_fastq = bbcms.out2
+        File bbcms_fastq = finish_asm.outbbcms
     }
  
     meta {
@@ -120,7 +119,7 @@ workflow jgi_metaASM {
 task stage {
    input{ 
    String container
-   File? input_file
+   String? input_file
    String memory = "4G"
    String target = "staged.fastq.gz"
    String output1 = "input.left.fastq.gz"
@@ -196,6 +195,7 @@ task finish_asm {
     File? samgz
     File? covstats
     File asmstats
+    File bbcms_fastq
     String container
     String proj
     String prefix 
@@ -217,6 +217,7 @@ task finish_asm {
         cat ~{scaffold} | sed ~{sed} > ~{prefix}_scaffolds.fna
         cat ~{covstats} | sed ~{sed} > ~{prefix}_covstats.txt
         cat ~{agp} | sed ~{sed} > ~{prefix}_assembly.agp
+        cat ~{bbcms_fastq} | sed ~{sed} > ~{prefix}_bbcms.fastq.gz
 
        ## Bam file     
        samtools view -h ~{bam} | sed ~{sed} | \
@@ -237,6 +238,7 @@ task finish_asm {
         File outsamgz = "~{prefix}_pairedMapped.sam.gz"
         File outcovstats = "~{prefix}_covstats.txt"
         File outasmstats = "stats.json"
+        File outbbcms = "~{prefix}_bbcms.fastq.gz"
     }
 
     runtime {

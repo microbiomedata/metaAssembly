@@ -1,9 +1,7 @@
 {
-  "jgi_metaASM.input_file":["/global/cfs/projectdirs/m3408/ficus/11809.7.220839.TCCTGAG-ACTGCAT.fastq.gz"],
-  "jgi_metaASM.rename_contig_prefix":"503125_160870",
-  "jgi_metaASM.proj":"nmdc:503125_160870",
-  "jgi_metaASM.resource": "NERSC -- perlmutter",
-  "jgi_metaASM.informed_by": "nmdc:xxxxxx",
-  "jgi_metaASM.memory": "105G",
-  "jgi_metaASM.threads": "16"
+  "jgi_metaAssembly.input_files":["https://data.microbiomedata.org/data/test_data/11809.7.220839.TCCTGAG-ACTGCAT.fastq.gz"],
+  "jgi_metaAssembly.proj":"nmdc:503125_160870",
+  "jgi_metaAssembly.memory": "105G",
+  "jgi_metaAssembly.threads": "16",
+  "jgi_metaAssembly.shortRead": true
 }

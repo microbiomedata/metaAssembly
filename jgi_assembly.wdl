@@ -1,7 +1,8 @@
 version 1.0
 import "shortReads_assembly.wdl" as srma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
-import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
+# import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
+import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/raw/bc7c4371ea0fa83355bada341ec353b9feb3eff2/metagenome_improved/metaflye.wdl" as lrma
 
 workflow jgi_metaAssembly{
     input {  
@@ -12,7 +13,7 @@ workflow jgi_metaAssembly{
         String? memory
         String? threads
         # longReads parameters
-        Array[File] input_files
+        Array[String] input_files
         String flye_container = "staphb/flye:2.9.2"
         String flye_parameters = "--meta -o flye -t 32 --pacbio-hifi"
         String smrtlink_container = "bryce911/smrtlink:12.0.0.177059"
@@ -99,14 +100,14 @@ workflow jgi_metaAssembly{
         File? sr_covstats=jgi_metaASM.covstats
         File? sr_asmstats=jgi_metaASM.asmstats
         File? sr_asminfo=jgi_metaASM.asminfo
-
+        File? sr_bbcms_fq = jgi_metaASM.bbcms_fastq
           
     }
 }
 
 
 task finish_lrasm {
-    input{
+    input {
     File contigs
     File bam
     File scaffolds

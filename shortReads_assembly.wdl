@@ -218,6 +218,7 @@ task finish_asm {
         cat ~{covstats} | sed ~{sed} > ~{prefix}_covstats.txt
         cat ~{agp} | sed ~{sed} > ~{prefix}_assembly.agp
         cat ~{bbcms_fastq} | sed ~{sed} > ~{prefix}_bbcms.fastq.gz
+        ln ~{bbcms_fastq} ~{prefix}_bbcms.fastq.gz || ln -s ~{bbcms_fastq} ~{prefix}_bbcms.fastq.gz
 
        ## Bam file     
        samtools view -h ~{bam} | sed ~{sed} | \

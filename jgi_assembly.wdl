@@ -1,7 +1,8 @@
 version 1.0
 import "shortReads_assembly.wdl" as srma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
-import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
+# import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
+import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/raw/bc7c4371ea0fa83355bada341ec353b9feb3eff2/metagenome_improved/metaflye.wdl" as lrma
 
 workflow jgi_metaAssembly{
     input {  
@@ -99,10 +100,7 @@ workflow jgi_metaAssembly{
         File? sr_covstats=jgi_metaASM.covstats
         File? sr_asmstats=jgi_metaASM.asmstats
         File? sr_asminfo=jgi_metaASM.asminfo
-        File? sr_bbcms_fq = jgi_metaASM.bbcms_fastq 
-        File? sr_bbcms_fql = jgi_metaASM.bbcms_left_fastq 
-        File? sr_bbcms_fqr = jgi_metaASM.bbcms_right_fastq 
-
+        File? sr_bbcms_fq = jgi_metaASM.bbcms_fastq
           
     }
 }

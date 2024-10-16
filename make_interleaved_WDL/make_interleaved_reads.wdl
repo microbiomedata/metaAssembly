@@ -45,6 +45,8 @@ task interleave_reads{
 	
 	runtime {
 		docker: container
+		memory: "1 GiB"
+        cpu:  1
 	}
 	
 	output {

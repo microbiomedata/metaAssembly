@@ -30,7 +30,7 @@ workflow jgi_metaAssembly{
         	call int.make_interleaved_reads{
 			input:
 			input_files = input_files,
-            container = bbtools_container,
+            container = bbtools_container
 
        		}
     	}

@@ -34,7 +34,8 @@ workflow jgi_metaASM {
          infile2=bbcms.out2, 
          container=spades_container, 
          threads=threads,  
-         paired = paired
+         paired = paired,
+         memory = memory
     }
     call create_agp {
          input: 
@@ -383,10 +384,11 @@ task assy {
      String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
      String spades_cpu=select_first([threads,system_cpu])
      Boolean paired = true
+     String? memory = "120 GiB"
     }
      runtime {
             docker: container
-            memory: "120 GiB"
+            memory: memory
             cpu:  16
      }
      command{
@@ -421,7 +423,7 @@ task bbcms {
     input{
      Array[File] input_files
      String container
-     String? memory
+     String? memory="120 GiB"
      Boolean paired = true
      String filename_outfile="input.corr.fastq.gz"
      String filename_outfile1="input.corr.left.fastq.gz"
@@ -434,7 +436,7 @@ task bbcms {
     }
      runtime {
             docker: container
-            memory: "120 GiB"
+            memory: memory
         cpu:  16
      }
 

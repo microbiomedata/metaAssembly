@@ -3,6 +3,7 @@ workflow jgi_metaASM {
     input{
         # String? outdir
         String? memory
+        String? allocated_memory
         String? threads
         String? input_file
         String proj
@@ -25,7 +26,7 @@ workflow jgi_metaASM {
           input: 
           input_files=stage.assembly_input, 
           container=bbtools_container, 
-          memory=memory,  
+          memory=memory,
           paired = paired
     }
     call assy {
@@ -36,6 +37,7 @@ workflow jgi_metaASM {
          threads=threads,  
          paired = paired,
          memory = memory
+         allocated_memory=allocated_memory,
     }
     call create_agp {
          input: 
@@ -384,11 +386,12 @@ task assy {
      String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
      String spades_cpu=select_first([threads,system_cpu])
      Boolean paired = true
-     String? memory = "120 GiB"
+     String memory = "120g"
+     String allocated_memory = sub(memory, "g", " GB")
     }
      runtime {
             docker: container
-            memory: memory
+            memory: allocated_memory
             cpu:  16
      }
      command{

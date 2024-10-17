@@ -37,7 +37,6 @@ workflow jgi_metaASM {
          threads=threads,  
          paired = paired,
          memory = memory
-         allocated_memory=allocated_memory,
     }
     call create_agp {
          input: 

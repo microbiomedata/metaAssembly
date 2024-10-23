@@ -425,7 +425,7 @@ task bbcms {
     input{
      Array[File] input_files
      String container
-     String? memory="120 GiB"
+     String memory="120 GiB"
      Boolean paired = true
      String filename_outfile="input.corr.fastq.gz"
      String filename_outfile1="input.corr.left.fastq.gz"

@@ -435,10 +435,11 @@ task bbcms {
      String filename_errlog="stderr.log"
      String filename_kmerfile="unique31mer.txt"
      String filename_counts="counts.metadata.json"
+     String allocated_memory = sub(memory, "g", " GB")
     }
      runtime {
             docker: container
-            memory: memory
+            memory: allocated_memory
         cpu:  16
      }
 

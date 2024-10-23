@@ -425,7 +425,6 @@ task bbcms {
     input{
      Array[File] input_files
      String container
-     String memory="120 GiB"
      Boolean paired = true
      String filename_outfile="input.corr.fastq.gz"
      String filename_outfile1="input.corr.left.fastq.gz"
@@ -435,11 +434,12 @@ task bbcms {
      String filename_errlog="stderr.log"
      String filename_kmerfile="unique31mer.txt"
      String filename_counts="counts.metadata.json"
+     String memory="120 GiB"
      String allocated_memory = sub(memory, "g", " GB")
     }
      runtime {
             docker: container
-            memory: allocated_memory
+            memory: "120 GiB"
         cpu:  16
      }
 

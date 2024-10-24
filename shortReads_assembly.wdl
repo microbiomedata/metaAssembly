@@ -439,8 +439,8 @@ task bbcms {
     }
      runtime {
             docker: container
-            memory: "120 GiB"
-        cpu:  16
+            memory: allocated_memory
+            cpu:  16
      }
 
      command {

@@ -1,6 +1,6 @@
 version 1.0
 workflow jgi_metaASM {
-    input{
+    input {
         # String? outdir
         String? memory
         String? threads
@@ -13,7 +13,7 @@ workflow jgi_metaASM {
         String spades_container="microbiomedata/spades:3.15.0"
         String worflowmeta_container="microbiomedata/workflowmeta:1.1.1"
         Boolean paired = true
-        }
+    }
 
     call stage {
         input:
@@ -117,49 +117,51 @@ workflow jgi_metaASM {
 }
 
 task stage {
-   input{ 
-   String container
-   String? input_file
-   String memory = "4G"
-   String target = "staged.fastq.gz"
-   String output1 = "input.left.fastq.gz"
-   String output2 = "input.right.fastq.gz"}
+    input { 
+        String container
+        String? input_file
+        String memory = "4G"
+        String target = "staged.fastq.gz"
+        String output1 = "input.left.fastq.gz"
+        String output2 = "input.right.fastq.gz"
+    }
 
-   command <<<
-       set -euo pipefail
-       if [ $( echo ~{input_file}|egrep -c "https*:") -gt 0 ] ; then
-           wget ~{input_file} -O ~{target}
-       else
-           ln -s ~{input_file} ~{target} || cp ~{input_file} ~{target}
-       fi
+    command<<<
+
+        set -euo pipefail
+        if [ $( echo ~{input_file}|egrep -c "https*:") -gt 0 ] ; then
+            wget ~{input_file} -O ~{target}
+        else
+            ln -s ~{input_file} ~{target} || cp ~{input_file} ~{target}
+        fi
 
         reformat.sh \
         ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx10G" }\
         in=~{target} \
         out1=~{output1} \
         out2=~{output2}    
-       # Capture the start time
-       date --iso-8601=seconds > start.txt
+        # Capture the start time
+        date --iso-8601=seconds > start.txt
 
-   >>>
+    >>>
 
-   output{
-      Array[File] assembly_input = [output1, output2]
-      String start = read_string("start.txt")
-   }
-   runtime {
-     cpu:  2
-     maxRetries: 1
-     docker: container
-   }
+    output {
+        Array[File] assembly_input = [output1, output2]
+        String start = read_string("start.txt")
+    }
+    runtime {
+        cpu:  2
+        maxRetries: 1
+        docker: container
+    }
 }
 
 task make_info_file {
-    input{
-    File assy_info
-    File bbcms_info
-    String prefix
-    String container
+    input {
+        File assy_info
+        File bbcms_info
+        String prefix
+        String container
     }
 
     command<<<
@@ -178,6 +180,7 @@ task make_info_file {
     output {
         File asminfo = "~{prefix}_metaAsm.info"
     }
+
     runtime {
         memory: "1 GiB"
         cpu:  1
@@ -187,22 +190,23 @@ task make_info_file {
 }
 
 task finish_asm {
-    input{
-    File fasta
-    File scaffold
-    File? agp
-    File bam
-    File? samgz
-    File? covstats
-    File asmstats
-    File bbcms_fastq
-    String container
-    String proj
-    String prefix 
-    String orig_prefix="scaffold"
-    String sed="s/~{orig_prefix}_/~{proj}_/g"
-    # String start
+    input {
+        File fasta
+        File scaffold
+        File? agp
+        File bam
+        File? samgz
+        File? covstats
+        File asmstats
+        File bbcms_fastq
+        String container
+        String proj
+        String prefix 
+        String orig_prefix="scaffold"
+        String sed="s/~{orig_prefix}_/~{proj}_/g"
+        # String start
     }
+
     command<<<
 
         set -euo pipefail
@@ -249,32 +253,28 @@ task finish_asm {
 }
 
 
-task read_mapping_pairs{
-    input{
-    Array[File] reads
-    File ref
-    String container
-    String? memory
-    String? threads
-    Boolean paired = true
-    String bbmap_interleaved_flag = if paired then 'interleaved=true' else 'interleaved=false'
+task read_mapping_pairs {
+    input {
+        Array[File] reads
+        File ref
+        String container
+        String? memory
+        String? threads
+        Boolean paired = true
+        String bbmap_interleaved_flag = if paired then 'interleaved=true' else 'interleaved=false'
 
-    String filename_unsorted="pairedMapped.bam"
-    String filename_outsam="pairedMapped.sam.gz"
-    String filename_sorted="pairedMapped_sorted.bam"
-    String filename_sorted_idx="pairedMapped_sorted.bam.bai"
-    String filename_bamscript="to_bam.sh"
-    String filename_cov="covstats.txt"
-    String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
-    String jvm_threads=select_first([threads,system_cpu])
+        String filename_unsorted="pairedMapped.bam"
+        String filename_outsam="pairedMapped.sam.gz"
+        String filename_sorted="pairedMapped_sorted.bam"
+        String filename_sorted_idx="pairedMapped_sorted.bam.bai"
+        String filename_bamscript="to_bam.sh"
+        String filename_cov="covstats.txt"
+        String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
+        String jvm_threads=select_first([threads,system_cpu])
     }
-    runtime {
-            docker: container
-            memory: "120 GiB"
-        cpu:  16
-        maxRetries: 1
-     }
-    command{
+
+    command<<<
+
         set -euo pipefail
         if [[ ~{reads[0]}  == *.gz ]] ; then
              cat ~{sep=" " reads} > infile.fastq.gz
@@ -314,33 +314,36 @@ task read_mapping_pairs{
 
         ln -s ~{filename_cov} mapping_stats.txt
         rm $mapping_input
-  }
-  output{
-      File outbamfile = filename_sorted
-      File outbamfileidx = filename_sorted_idx
-      File outcovfile = filename_cov
-      File outsamfile = filename_outsam
-  }
+
+    >>>
+    output {
+        File outbamfile = filename_sorted
+        File outbamfileidx = filename_sorted_idx
+        File outcovfile = filename_cov
+        File outsamfile = filename_outsam
+    }
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+        maxRetries: 1
+    }
 }
 
 task create_agp {
-    input{
-    File scaffolds_in
-    String? memory
-    String container
-    String rename_contig_prefix
-    String prefix="assembly"
-    String filename_contigs="~{prefix}_contigs.fna"
-    String filename_scaffolds="~{prefix}_scaffolds.fna"
-    String filename_agp="~{prefix}.agp"
-    String filename_legend="~{prefix}_scaffolds.legend"
+    input {
+        File scaffolds_in
+        String? memory
+        String container
+        String rename_contig_prefix
+        String prefix="assembly"
+        String filename_contigs="~{prefix}_contigs.fna"
+        String filename_scaffolds="~{prefix}_scaffolds.fna"
+        String filename_agp="~{prefix}.agp"
+        String filename_legend="~{prefix}_scaffolds.legend"
     }
-    runtime {
-            docker: container
-            memory: "120 GiB"
-        cpu:  16
-     }
-    command{
+
+    command<<<
         set -euo pipefail
         fungalrelease.sh \
         ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx105G" } \
@@ -361,35 +364,39 @@ task create_agp {
         fi
         bbstats.sh format=8 in=~{filename_scaffolds} out=stats.json
         sed -i 's/l_gt50k/l_gt50K/g' stats.json
+
+    >>>
+
+    output {
+        File outcontigs = filename_contigs
+        File outscaffolds = filename_scaffolds
+        File outagp = filename_agp
+        File outstats = "stats.json"
+        File outlegend = filename_legend
     }
-    output{
-    File outcontigs = filename_contigs
-    File outscaffolds = filename_scaffolds
-    File outagp = filename_agp
-    File outstats = "stats.json"
-    File outlegend = filename_legend
+
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
     }
 }
 
 task assy {
-    input{
-     File infile1
-     File infile2
-     String container
-     String? threads
-     String outprefix="spades3"
-     String filename_outfile="~{outprefix}/scaffolds.fasta"
-     String filename_spadeslog ="~{outprefix}/spades.log"
-     String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
-     String spades_cpu=select_first([threads,system_cpu])
-     Boolean paired = true
+    input {
+        File infile1
+        File infile2
+        String container
+        String? threads
+        String outprefix="spades3"
+        String filename_outfile="~{outprefix}/scaffolds.fasta"
+        String filename_spadeslog ="~{outprefix}/spades.log"
+        String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
+        String spades_cpu=select_first([threads,system_cpu])
+        Boolean paired = true
     }
-     runtime {
-            docker: container
-            memory: "120 GiB"
-            cpu:  16
-     }
-     command{
+
+    command <<<
         set -euo pipefail
         if ~{paired}; then
             spades.py \
@@ -410,44 +417,45 @@ task assy {
             -t ~{spades_cpu} \
             -s ~{infile1}
         fi
-     }
-     output {
-            File out = filename_outfile
-            File outlog = filename_spadeslog
-     }
+    >>>
+
+    output {
+        File out = filename_outfile
+        File outlog = filename_spadeslog
+    }
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+    }
 }
 
 task bbcms {
-    input{
-     Array[File] input_files
-     String container
-     String? memory
-     Boolean paired = true
-     String filename_outfile="input.corr.fastq.gz"
-     String filename_outfile1="input.corr.left.fastq.gz"
-     String filename_outfile2="input.corr.right.fastq.gz"
-     String filename_readlen="readlen.txt"
-     String filename_outlog="stdout.log"
-     String filename_errlog="stderr.log"
-     String filename_kmerfile="unique31mer.txt"
-     String filename_counts="counts.metadata.json"
+    input {
+        Array[File] input_files
+        String container
+        String? memory
+        Boolean paired = true
+        String filename_outfile="input.corr.fastq.gz"
+        String filename_outfile1="input.corr.left.fastq.gz"
+        String filename_outfile2="input.corr.right.fastq.gz"
+        String filename_readlen="readlen.txt"
+        String filename_outlog="stdout.log"
+        String filename_errlog="stderr.log"
+        String filename_kmerfile="unique31mer.txt"
+        String filename_counts="counts.metadata.json"
     }
-     runtime {
-            docker: container
-            memory: "120 GiB"
-        cpu:  16
-     }
 
-     command {
+    command<<<
         set -euo pipefail
         if file --mime -b ~{input_files[0]} | grep gzip; then
-             cat ~{sep=" " input_files} > infile.fastq.gz
-             export bbcms_input="infile.fastq.gz"
+                cat ~{sep=" " input_files} > infile.fastq.gz
+                export bbcms_input="infile.fastq.gz"
         fi
 
         if file --mime -b ~{input_files[0]} | grep plain; then
-             cat ~{sep=" " input_files} > infile.fastq
-             export bbcms_input="infile.fastq"
+                cat ~{sep=" " input_files} > infile.fastq
+                export bbcms_input="infile.fastq"
         fi
 
         bbcms.sh \
@@ -477,19 +485,24 @@ task bbcms {
         out=~{filename_readlen}
 
         rm $bbcms_input
-        
-     }
-     output {
-            File out = filename_outfile
-            File out1 = if paired then filename_outfile1 else filename_outfile
-            File out2 = if paired then filename_outfile2 else filename_outfile
-            File outreadlen = filename_readlen
-            File stdout = filename_outlog
-            File stderr = filename_errlog
-            File outcounts = filename_counts
-            File outkmer = filename_kmerfile
-            
-     }
+    
+    >>>
+
+    output {
+        File out = filename_outfile
+        File out1 = if paired then filename_outfile1 else filename_outfile
+        File out2 = if paired then filename_outfile2 else filename_outfile
+        File outreadlen = filename_readlen
+        File stdout = filename_outlog
+        File stderr = filename_errlog
+        File outcounts = filename_counts
+        File outkmer = filename_kmerfile
+    }
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+    }
 }
 
 # task make_output{

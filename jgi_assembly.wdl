@@ -1,10 +1,10 @@
 version 1.0
 import "shortReads_assembly.wdl" as srma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
-# import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
-import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/raw/bc7c4371ea0fa83355bada341ec353b9feb3eff2/metagenome_improved/metaflye.wdl" as lrma
+import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
+# import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/raw/bc7c4371ea0fa83355bada341ec353b9feb3eff2/metagenome_improved/metaflye.wdl" as lrma
 
-workflow jgi_metaAssembly{
+workflow jgi_metaAssembly {
     input {  
         Boolean shortRead
         String proj
@@ -26,14 +26,14 @@ workflow jgi_metaAssembly{
 
 
     if (shortRead) {
-    	if (length(input_files) > 1){
-        	call int.make_interleaved_reads{
+    	if (length(input_files) > 1) {
+        	call int.make_interleaved_reads {
 			input:
 			input_files = input_files,
             container = bbtools_container
        		}
     	}
-        call srma.jgi_metaASM{
+        call srma.jgi_metaASM {
             input:
             memory = memory,
             threads = threads,
@@ -45,7 +45,7 @@ workflow jgi_metaAssembly{
         
     }
     if (!shortRead) {
-        call lrma.metaflye{
+        call lrma.metaflye {
             input:
             proj = proj,
             input_fastq = input_files,
@@ -58,7 +58,7 @@ workflow jgi_metaAssembly{
             samtools_container = samtools_container,
             bbtools_container = bbtools_container
         }
-        call finish_lrasm{
+        call finish_lrasm {
             input: 
             proj = proj,
             prefix = prefix,
@@ -98,33 +98,34 @@ workflow jgi_metaAssembly{
         File? sr_bam=jgi_metaASM.bam
         File? sr_samgz=jgi_metaASM.samgz
         File? sr_covstats=jgi_metaASM.covstats
-        File? sr_asmstats=jgi_metaASM.asmstats
         File? sr_asminfo=jgi_metaASM.asminfo
         File? sr_bbcms_fq = jgi_metaASM.bbcms_fastq
-          
+
+        #Both
+        File? stats = if (shortRead) then jgi_metaASM.asmstats else metaflye.asmstats
     }
 }
 
 
 task finish_lrasm {
     input {
-    File contigs
-    File bam
-    File scaffolds
-    File agp
-    File legend
-    File basecov
-    File sam
-    File output_file
-    File stats
-    File summary_stats
-    File pileup_out
-    String container
-    String proj
-    String prefix 
-    String orig_prefix="scaffold"
-    String sed="s/~{orig_prefix}_/~{proj}_/g"
-    # String start
+        File contigs
+        File bam
+        File scaffolds
+        File agp
+        File legend
+        File basecov
+        File sam
+        File output_file
+        File stats
+        File summary_stats
+        File pileup_out
+        String container
+        String proj
+        String prefix 
+        String orig_prefix="scaffold"
+        String sed="s/~{orig_prefix}_/~{proj}_/g"
+        # String start
     }
     command<<<
 

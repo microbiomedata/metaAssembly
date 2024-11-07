@@ -11,7 +11,7 @@ workflow jgi_metaASM {
         # Float uniquekmer=1000
         String bbtools_container="microbiomedata/bbtools:38.96"
         String spades_container="microbiomedata/spades:3.15.0"
-        String worflowmeta_container="microbiomedata/workflowmeta:1.1.1"
+        String workflowmeta_container="microbiomedata/workflowmeta:1.1.1"
         Boolean paired = true
     }
 
@@ -65,7 +65,7 @@ workflow jgi_metaASM {
         proj=proj,
         prefix=prefix,
         # start=stage.start, 
-        container=worflowmeta_container,
+        container=workflowmeta_container,
         fasta=create_agp.outcontigs,
         scaffold=create_agp.outscaffolds,
         agp=create_agp.outagp,
@@ -93,7 +93,7 @@ workflow jgi_metaASM {
     #     samgz_name=basename(finish_asm.outcontigs),
     #     covstats_name=basename(finish_asm.outcontigs),
     #     asmstats_name=basename(finish_asm.outcontigs),
-    #     container = worflowmeta_container
+    #     container = workflowmeta_container
     # }
  
     output {

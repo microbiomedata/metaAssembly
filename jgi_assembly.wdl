@@ -1,8 +1,8 @@
 version 1.0
 import "shortReads_assembly.wdl" as srma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
-import "jgi_meta_wdl/metagenome_improved/metaflye.wdl" as lrma
-# import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/raw/bc7c4371ea0fa83355bada341ec353b9feb3eff2/metagenome_improved/metaflye.wdl" as lrma
+# import "metaAssembly/metagenome_improved/metaflye.wdl" as lrma
+import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/raw/bc7c4371ea0fa83355bada341ec353b9feb3eff2/metagenome_improved/metaflye.wdl" as lrma
 
 workflow jgi_metaAssembly {
     input {  
@@ -102,7 +102,7 @@ workflow jgi_metaAssembly {
         File? sr_bbcms_fq = jgi_metaASM.bbcms_fastq
 
         #Both
-        File? stats = if (shortRead) then jgi_metaASM.asmstats else metaflye.asmstats
+        File? stats = if (shortRead) then jgi_metaASM.asmstats else finish_lrasm.asm_stats
     }
 }
 
@@ -143,12 +143,17 @@ task finish_lrasm {
         cat ~{basecov} | sed ~{sed} > ~{prefix}_contigs.sorted.bam.pileup.basecov
         cat ~{pileup_out} | sed ~{sed} > ~{prefix}_contigs.sorted.bam.pileup.out
 
-       ## Bam file     
-       samtools view -h ~{bam} | sed ~{sed} | \
-          samtools view -hb -o ~{prefix}_pairedMapped_sorted.bam
-       ## Sam.gz file
-       samtools view -h ~{sam} | sed ~{sed} | \
-          gzip -c - > ~{prefix}_pairedMapped.sam.gz
+        ## Bam file     
+        samtools view -h ~{bam} | sed ~{sed} | \
+            samtools view -hb -o ~{prefix}_pairedMapped_sorted.bam
+        ## Sam.gz file
+        samtools view -h ~{sam} | sed ~{sed} | \
+            gzip -c - > ~{prefix}_pairedMapped.sam.gz
+        
+        # stats file
+        bbstats.sh format=8 in=~{scaffolds} out=stats.json
+        sed -i 's/l_gt50k/l_gt50K/g' stats.json
+        cat stats.json |jq 'del(.filename)' > stats.json
 
     >>>
     output {
@@ -163,6 +168,7 @@ task finish_lrasm {
         File final_stats = "~{prefix}_contigs.sam.stats"
         File final_summary_stats = "~{prefix}_summary.stats"
         File final_pileup_out = "~{prefix}_contigs.sorted.bam.pileup.out"
+        File asm_stats = "stats.json"
     }
 
     runtime {

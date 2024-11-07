@@ -21,7 +21,7 @@ workflow jgi_metaAssembly {
         String minimap2_container = "staphb/minimap2:2.25"
         String minimap2_parameters = "-a -x map-hifi -t 32"
         String samtools_container = "staphb/samtools:1.18"
-        String bbtools_container = "microbiomedata/bbtools:38.96"
+        String bbtools_container = "microbiomedata/bbtools:39.03"
     }
 
 

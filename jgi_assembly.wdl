@@ -1,7 +1,6 @@
 version 1.0
 import "shortReads_assembly.wdl" as srma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
-# import "metaAssembly/metagenome_improved/metaflye.wdl" as lrma
 import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/raw/bc7c4371ea0fa83355bada341ec353b9feb3eff2/metagenome_improved/metaflye.wdl" as lrma
 
 workflow jgi_metaAssembly {
@@ -22,6 +21,7 @@ workflow jgi_metaAssembly {
         String minimap2_parameters = "-a -x map-hifi -t 32"
         String samtools_container = "staphb/samtools:1.18"
         String bbtools_container = "microbiomedata/bbtools:39.03"
+        String spades_container="staphb/spades:4.0.0"
     }
 
 
@@ -29,7 +29,7 @@ workflow jgi_metaAssembly {
     	if (length(input_files) > 1) {
         	call int.make_interleaved_reads {
 			input:
-			input_files = input_files,
+			      input_files = input_files,
             container = "microbiomedata/bbtools:38.96"
        		}
     	}
@@ -40,6 +40,7 @@ workflow jgi_metaAssembly {
             input_file = if length(input_files) > 1 then make_interleaved_reads.interleaved_fastq else input_files[0],
             proj = proj,
             bbtools_container = "microbiomedata/bbtools:38.96"
+            spades_container = spades_container
 
         }
         

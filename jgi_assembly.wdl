@@ -28,53 +28,52 @@ workflow jgi_metaAssembly {
     if (shortRead) {
     	if (length(input_files) > 1) {
         	call int.make_interleaved_reads {
-			input:
-			      input_files = input_files,
-            container = "microbiomedata/bbtools:38.96"
+                input:
+                    input_files = input_files,
+                    container = "microbiomedata/bbtools:38.96"
        		}
     	}
         call srma.jgi_metaASM {
             input:
-            memory = memory,
-            threads = threads,
-            input_file = if length(input_files) > 1 then make_interleaved_reads.interleaved_fastq else input_files[0],
-            proj = proj,
-            bbtools_container = "microbiomedata/bbtools:38.96"
-            spades_container = spades_container
-
+                memory = memory,
+                threads = threads,
+                input_file = if length(input_files) > 1 then make_interleaved_reads.interleaved_fastq else input_files[0],
+                proj = proj,
+                bbtools_container = "microbiomedata/bbtools:38.96",
+                spades_container = spades_container
         }
         
     }
     if (!shortRead) {
         call lrma.metaflye {
             input:
-            proj = proj,
-            input_fastq = input_files,
-            flye_container = flye_container,
-            flye_parameters = flye_parameters,
-            smrtlink_container = smrtlink_container, 
-            racon_container = racon_container,
-            minimap2_container = minimap2_container,
-            minimap2_parameters = minimap2_parameters, 
-            samtools_container = samtools_container,
-            bbtools_container = bbtools_container
+                proj = proj,
+                input_fastq = input_files,
+                flye_container = flye_container,
+                flye_parameters = flye_parameters,
+                smrtlink_container = smrtlink_container, 
+                racon_container = racon_container,
+                minimap2_container = minimap2_container,
+                minimap2_parameters = minimap2_parameters, 
+                samtools_container = samtools_container,
+                bbtools_container = bbtools_container
         }
         call finish_lrasm {
             input: 
-            proj = proj,
-            prefix = prefix,
-            container = bbtools_container,
-            contigs = metaflye.final_contigs,
-            bam = metaflye.final_bam, 
-            scaffolds = metaflye.final_scaffolds,
-            agp = metaflye.final_agp,
-            legend = metaflye.final_legend,
-            basecov = metaflye.final_basecov,
-            sam = metaflye.final_sam,    
-            output_file = metaflye.final_output_file,
-            stats = metaflye.final_stats,
-            summary_stats = metaflye.final_summary_stats,
-            pileup_out = metaflye.final_pileup_out
+                proj = proj,
+                prefix = prefix,
+                container = bbtools_container,
+                contigs = metaflye.final_contigs,
+                bam = metaflye.final_bam, 
+                scaffolds = metaflye.final_scaffolds,
+                agp = metaflye.final_agp,
+                legend = metaflye.final_legend,
+                basecov = metaflye.final_basecov,
+                sam = metaflye.final_sam,    
+                output_file = metaflye.final_output_file,
+                stats = metaflye.final_stats,
+                summary_stats = metaflye.final_summary_stats,
+                pileup_out = metaflye.final_pileup_out
         }
     }
     output {

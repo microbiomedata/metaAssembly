@@ -1,4 +1,4 @@
-Metagenome Assembly Workflow (v1.0.6)
+Metagenome Assembly Workflow (v1.0.7)
 ========================================
 
 .. image:: workflow_assembly.png
@@ -251,7 +251,7 @@ mapping/                                            stdout.background           
 Version History
 ---------------
 
-- 1.0.6 (release date **11/12/24**; previous versions: 1.0.5)
+- 1.0.7 (release date **11/12/24**; previous versions: 1.0.6)
 
 Point of contact
 ----------------

@@ -1,4 +1,4 @@
-Metagenome Assembly Workflow (v1.0.2)
+Metagenome Assembly Workflow (v1.0.6)
 ========================================
 
 .. image:: workflow_assembly.png
@@ -8,7 +8,7 @@ Metagenome Assembly Workflow (v1.0.2)
 Workflow Overview
 -----------------
 
-This workflow takes in paired-end Illumina reads in interleaved format and performs error correction, then reformats the interleaved file into two FASTQ files for downstream tasks using bbcms (BBTools). The corrected reads are assembled using metaSPAdes. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information. The .wdl (Workflow Description Language) file includes five tasks, *bbcms*, *assy*, *create_agp*, *read_mapping_pairs*, and *make_output*.
+This workflow takes in paired-end Illumina short reads or paired-end PacBio long reads in interleaved format and performs error correction, then reformats the interleaved file into two FASTQ files for downstream tasks using bbcms (BBTools). The corrected reads are assembled using metaSPAdes. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information. The .wdl (Workflow Description Language) file includes five tasks, *bbcms*, *assy*, *create_agp*, *read_mapping_pairs*, and *make_output*.
 
 1. The *bbcms* task takes in interleaved FASTQ inputs and performs error correction and reformats the interleaved fastq into two output FASTQ files for paired-end reads for the next tasks. 
 2. The *assy* task performs metaSPAdes assembly
@@ -62,6 +62,8 @@ Sample dataset(s)
 
 - large dataset: `Zymobiomics mock-community DNA control (22G) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_large_test_data.tgz>`_ .  You can find input/output in the downloaded tar gz file.
 
+- long reads dataset: `/global/cfs/cdirs/m3408/www/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz`
+
 Zymobiomics mock-community DNA control (`SRR7877884 <https://www.ebi.ac.uk/ena/browser/view/SRR7877884>`_); this original dataset is ~4 GB.
 
 For testing purposes and for the following examples, we used a 10% sub-sampling of the above dataset: (`SRR7877884-int-0.1.fastq.gz <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884-int-0.1.fastq.gz>`_). This dataset is already interleaved. 
@@ -72,42 +74,68 @@ Input
 
 A JSON file containing the following information:
 
-1. the path to the input FASTQ file (Illumina paired-end interleaved FASTQ) (recommended the output of the Reads QC workflow.)
-2. the contig prefix for the FASTA header
-3. the output path
-4. input_interleaved (boolean)
-5. forwards reads fastq file (required value when input_interleaved is false, otherwise use [] )
-6. reverse reads fastq file (required value when input_interleaved is false, otherwise use [] )
-7. memory (optional) ex: “jgi_metaASM.memory”: “105G”
-8. threads (optional) ex: “jgi_metaASM.threads”: “16”
+1. the path to the input FASTQ file (Illumina paired-end interleaved FASTQ or PacBio paired-end intereleaved FASTQ) (recommended the output of the Reads QC workflow.)
+2. project name: nmdc:XXXXXX
+3. memory (optional) ex: "jgi_metaAssembly.memory": "105G"
+4. threads (optional) ex: "jgi_metaAssembly.threads": "16"
+5. whether the input is short reads (boolean)
 
-An example input JSON file is shown below::
+An example input JSON file is shown below for short reads::
 
     {
-        "jgi_metaASM.input_file":["/path/to/SRR7877884-int-0.1.fastq.gz "],
-        "jgi_metaASM.rename_contig_prefix":"projectID",
-        "jgi_metaASM.outdir":"/path/to/ SRR7877884-int-0.1_assembly",
-        "jgi_metaASM.input_interleaved":true,
-        "jgi_metaASM.input_fq1":[],
-        "jgi_metaASM.input_fq2":[],
-        "jgi_metaASM.memory": "105G",
-        "jgi_metaASM.threads": "16"
+        "jgi_metaAssembly.input_files":["https://portal.nersc.gov/project/m3408//test_data/smalltest.int.fastq.gz"],
+        "jgi_metaAssembly.proj":"nmdc:XXXXXX",
+        "jgi_metaAssembly.memory": "105G",
+        "jgi_metaAssembly.threads": "16",
+        "jgi_metaAssembly.shortRead": true
+    }
+
+
+An example input JSON file is shown below for long reads::
+
+    {
+        "jgi_metaAssembly.input_files":["/global/cfs/cdirs/m3408/www/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz"],
+        "jgi_metaAssembly.proj":"nmdc:XXXXXX",
+        "jgi_metaAssembly.memory": "105G",
+        "jgi_metaAssembly.threads": "16",
+        "jgi_metaAssembly.shortRead": false
     }
 
 Output
 ------
 
-The output directory will contain following files::
+The output directory will contain following files for short reads::
 
 
     output/
-    ├── assembly.agp
-    ├── assembly_contigs.fna
-    ├── assembly_scaffolds.fna
-    ├── covstats.txt
-    ├── pairedMapped.sam.gz
-    ├── pairedMapped_sorted.bam
-    └── stats.json
+    ├── nmdc_XXXXXX_metaAsm.info
+    ├── nmdc_XXXXXX_covstats.txt
+    ├── nmdc_XXXXXX_bbcms.fastq.gz
+    ├── nmdc_XXXXXX_scaffolds.fna
+    ├── nmdc_XXXXXX_assembly.agp
+    ├── stats.json
+    ├── nmdc_XXXXXX_pairedMapped.sam.gz
+    └── nmdc_XXXXXX_pairedMapped_sorted.bam
+
+
+The output directory will contain following files for long reads::
+
+
+    output/
+    ├── nmdc_XXXXXX_assembly.legend
+    ├── nmdc_XXXXXX_contigs.fna
+    ├── nmdc_XXXXXX_pairedMapped_sorted.bam
+    ├── nmdc_XXXXXX_read_count_report.txt
+    ├── nmdc_XXXXXX_metaAsm.info
+    ├── nmdc_XXXXXX__summary.stats
+    ├── nmdc_XXXXXX_scaffolds.fna
+    ├── nmdc_XXXXXX_pairedMapped.sam.gz
+    ├── stats.json
+    ├── nmdc_XXXXXX_contigs.sam.stats
+    ├── nmdc_XXXXXX_contigs.sorted.bam.pileup.basecov
+    ├── nmdc_XXXXXX_assembly.agp
+    └── nmdc_XXXXXX_contigs.sorted.bam.pileup.out
+
 
 Part of an example output stats JSON file is shown below:
 
@@ -137,8 +165,7 @@ Part of an example output stats JSON file is shown below:
    "scaf_l_gt50K": 0,
    "scaf_pct_gt50K": 0.0,
    "gc_avg": 0.39129,
-   "gc_std": 0.03033,
-   "filename": "/global/cfs/cdirs/m3408/aim2/metagenome/assembly/cromwell-executions/jgi_metaASM/3342a6e8-7f78-40e6-a831-364dd2a47baa/call-create_agp/execution/assembly_scaffolds.fna"
+   "gc_std": 0.03033
 }
 ```
 
@@ -224,7 +251,7 @@ mapping/                                            stdout.background           
 Version History
 ---------------
 
-- 1.0.2 (release date **03/12/2021**; previous versions: 1.0.1)
+- 1.0.6 (release date **11/12/24**; previous versions: 1.0.5)
 
 Point of contact
 ----------------

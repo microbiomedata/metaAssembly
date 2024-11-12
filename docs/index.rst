@@ -20,8 +20,11 @@ Workflow Availability
 ---------------------
 
 The workflow from GitHub uses all the listed Docker images to run all third-party tools.  
+
 The workflow is available on GitHub: `https://github.com/microbiomedata/metaAssembly`  
+
 The corresponding Docker images are available on DockerHub:
+
 - `https://hub.docker.com/r/microbiomedata/spades`
 - `https://hub.docker.com/r/microbiomedata/bbtools`
 
@@ -36,7 +39,7 @@ Requirements for Execution
 Hardware Requirements
 ---------------------
 
-- Memory: >40 GB RAM
+**Memory: >40 GB RAM**
 
 The memory requirement depends on the input complexity. Here is a simple estimation equation for the memory required based on kmers in the input file::
 
@@ -66,7 +69,8 @@ Sample dataset(s)
 
 - Small dataset: `Ecoli 10x (287M) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_small_test_data.tgz>`_ (Input/output included in tar.gz file)
 - Large dataset: `Zymobiomics mock-community DNA control (22G) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_large_test_data.tgz>`_ (Input/output included in tar.gz file)
-- Long reads dataset: `PacBio <https://portal.nersc.gov/project/m3408//test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz>`_
+
+Long reads dataset: `PacBio <https://portal.nersc.gov/project/m3408//test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz>`_
 
 Zymobiomics mock-community DNA control (`SRR7877884 <https://www.ebi.ac.uk/ena/browser/view/SRR7877884>`_). The original dataset is ~4 GB.
 
@@ -75,7 +79,7 @@ For testing, a 10% subsample of the dataset is used: (`SRR7877884-int-0.1.fastq.
 Input
 -----
 
-A JSON file containing the following information:
+A `JSON file <https://github.com/microbiomedata/metaAssembly/blob/master/input.json>`_ containing the following information:
 
 1. The path to the input FASTQ file (Illumina paired-end interleaved FASTQ or PacBio paired-end interleaved FASTQ) (recommended: output of the Reads QC workflow).
 2. Project name: nmdc:XXXXXX

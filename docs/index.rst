@@ -1,26 +1,29 @@
 Metagenome Assembly Workflow (v1.0.7)
-========================================
+=====================================
 
 .. image:: workflow_assembly.png
    :scale: 60%
    :alt: Metagenome assembly workflow dependencies
-   
+
 Workflow Overview
 -----------------
 
-This workflow takes in paired-end Illumina short reads or paired-end PacBio long reads in interleaved format and performs error correction, then reformats the interleaved file into two FASTQ files for downstream tasks using bbcms (BBTools). The corrected reads are assembled using metaSPAdes. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information. The .wdl (Workflow Description Language) file includes five tasks, *bbcms*, *assy*, *create_agp*, *read_mapping_pairs*, and *make_output*.
+This workflow takes in paired-end Illumina short reads or paired-end PacBio long reads in interleaved format and performs error correction, then reformats the interleaved file into two FASTQ files for downstream tasks using bbcms (BBTools). The corrected reads are assembled using metaSPAdes. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information. The `.wdl` (Workflow Description Language) file includes five tasks: *bbcms*, *assy*, *create_agp*, *read_mapping_pairs*, and *make_output*.
 
-1. The *bbcms* task takes in interleaved FASTQ inputs and performs error correction and reformats the interleaved fastq into two output FASTQ files for paired-end reads for the next tasks. 
-2. The *assy* task performs metaSPAdes assembly
-3. Contigs and Scaffolds (output of metaSPAdes) are consumed by the *create_agp* task to rename the FASTA header and generate an `AGP format <https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/>`_ which describes the assembly
+1. The *bbcms* task takes in interleaved FASTQ inputs, performs error correction, and reformats the interleaved FASTQ into two output FASTQ files for paired-end reads for the next tasks. 
+2. The *assy* task performs metaSPAdes assembly.
+3. Contigs and Scaffolds (output of metaSPAdes) are processed by the *create_agp* task to rename the FASTA header and generate an `AGP format <https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/>`_ which describes the assembly.
 4. The *read_mapping_pairs* task maps reads back to the final assembly to generate coverage information.
-5. The final *make_output* task adds all output files into the specified directory.
+5. The final *make_output* task collects all output files into the specified directory.
 
 Workflow Availability
 ---------------------
 
-The workflow from GitHub uses all the listed docker images to run all third-party tools.
-The workflow is available in GitHub: https://github.com/microbiomedata/metaAssembly; the corresponding Docker images are available in DockerHub: https://hub.docker.com/r/microbiomedata/spades and https://hub.docker.com/r/microbiomedata/bbtools
+The workflow from GitHub uses all the listed Docker images to run all third-party tools.  
+The workflow is available on GitHub: `https://github.com/microbiomedata/metaAssembly`  
+The corresponding Docker images are available on DockerHub:
+- `https://hub.docker.com/r/microbiomedata/spades`
+- `https://hub.docker.com/r/microbiomedata/bbtools`
 
 Requirements for Execution
 --------------------------
@@ -40,62 +43,61 @@ The memory requirement depends on the input complexity. Here is a simple estimat
     predicted_mem = (kmers * 2.962e-08 + 1.630e+01) * 1.1 (in GB)
 
 .. note::
-    
-    The kmers variable for the equation above can be obtained using the kmercountmulti.sh script from BBTools.
 
-    kmercountmulti.sh -k=31 in=your.read.fq.gz
+   The kmers variable for the equation above can be obtained using the `kmercountmulti.sh` script from BBTools.
 
+   Example command:
+
+   ::
+
+       kmercountmulti.sh -k=31 in=your.read.fq.gz
 
 Workflow Dependencies
 ---------------------
 
-Third party software:  (This is included in the Docker image.)
+Third-party software: (This is included in the Docker image.)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- `metaSPades v3.15.0 <https://cab.spbu.ru/software/spades/>`_ (License: `GPLv2 <https://github.com/ablab/spades/blob/spades_3.15.0/assembler/GPLv2.txt>`_)
-- `BBTools:38.94 <https://jgi.doe.gov/data-and-tools/bbtools/>`_ (License: `BSD-3-Clause-LBNL <https://bitbucket.org/berkeleylab/jgi-bbtools/src/master/license.txt>`_)
+- `metaSPAdes v3.15.0 <https://cab.spbu.ru/software/spades/>`_ (License: `GPLv2 <https://github.com/ablab/spades/blob/spades_3.15.0/assembler/GPLv2.txt>`_)
+- `BBTools v38.94 <https://jgi.doe.gov/data-and-tools/bbtools/>`_ (License: `BSD-3-Clause-LBNL <https://bitbucket.org/berkeleylab/jgi-bbtools/src/master/license.txt>`_)
 
 Sample dataset(s)
 -----------------
 
-- small dataset: `Ecoli 10x (287M) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_small_test_data.tgz>`_ . You can find input/output in the downloaded tar gz file.
+- Small dataset: `Ecoli 10x (287M) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_small_test_data.tgz>`_ (Input/output included in tar.gz file)
+- Large dataset: `Zymobiomics mock-community DNA control (22G) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_large_test_data.tgz>`_ (Input/output included in tar.gz file)
+- Long reads dataset: `PacBio <https://portal.nersc.gov/project/m3408//test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz>`_
 
-- large dataset: `Zymobiomics mock-community DNA control (22G) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_large_test_data.tgz>`_ .  You can find input/output in the downloaded tar gz file.
+Zymobiomics mock-community DNA control (`SRR7877884 <https://www.ebi.ac.uk/ena/browser/view/SRR7877884>`_). The original dataset is ~4 GB.
 
-- long reads dataset: `/global/cfs/cdirs/m3408/www/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz`
-
-Zymobiomics mock-community DNA control (`SRR7877884 <https://www.ebi.ac.uk/ena/browser/view/SRR7877884>`_); this original dataset is ~4 GB.
-
-For testing purposes and for the following examples, we used a 10% sub-sampling of the above dataset: (`SRR7877884-int-0.1.fastq.gz <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884-int-0.1.fastq.gz>`_). This dataset is already interleaved. 
-
+For testing, a 10% subsample of the dataset is used: (`SRR7877884-int-0.1.fastq.gz <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884-int-0.1.fastq.gz>`_). This dataset is already interleaved. 
 
 Input
 -----
 
 A JSON file containing the following information:
 
-1. the path to the input FASTQ file (Illumina paired-end interleaved FASTQ or PacBio paired-end intereleaved FASTQ) (recommended the output of the Reads QC workflow.)
-2. project name: nmdc:XXXXXX
-3. memory (optional) ex: "jgi_metaAssembly.memory": "105G"
-4. threads (optional) ex: "jgi_metaAssembly.threads": "16"
-5. whether the input is short reads (boolean)
+1. The path to the input FASTQ file (Illumina paired-end interleaved FASTQ or PacBio paired-end interleaved FASTQ) (recommended: output of the Reads QC workflow).
+2. Project name: nmdc:XXXXXX
+3. Memory (optional) e.g., `"jgi_metaAssembly.memory": "105G"`
+4. Threads (optional) e.g., `"jgi_metaAssembly.threads": "16"`
+5. Whether the input is short reads (boolean)
 
-An example input JSON file is shown below for short reads::
+Example input JSON for short reads::
 
     {
-        "jgi_metaAssembly.input_files":["https://portal.nersc.gov/project/m3408//test_data/smalltest.int.fastq.gz"],
-        "jgi_metaAssembly.proj":"nmdc:XXXXXX",
+        "jgi_metaAssembly.input_files": ["https://portal.nersc.gov/project/m3408/test_data/smalltest.int.fastq.gz"],
+        "jgi_metaAssembly.proj": "nmdc:XXXXXX",
         "jgi_metaAssembly.memory": "105G",
         "jgi_metaAssembly.threads": "16",
         "jgi_metaAssembly.shortRead": true
     }
 
-
-An example input JSON file is shown below for long reads::
+Example input JSON for long reads::
 
     {
-        "jgi_metaAssembly.input_files":["/global/cfs/cdirs/m3408/www/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz"],
-        "jgi_metaAssembly.proj":"nmdc:XXXXXX",
+        "jgi_metaAssembly.input_files": ["/global/cfs/cdirs/m3408/www/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz"],
+        "jgi_metaAssembly.proj": "nmdc:XXXXXX",
         "jgi_metaAssembly.memory": "105G",
         "jgi_metaAssembly.threads": "16",
         "jgi_metaAssembly.shortRead": false
@@ -104,8 +106,7 @@ An example input JSON file is shown below for long reads::
 Output
 ------
 
-The output directory will contain following files for short reads::
-
+The output directory will contain the following files for short reads::
 
     output/
     ├── nmdc_XXXXXX_metaAsm.info
@@ -117,9 +118,7 @@ The output directory will contain following files for short reads::
     ├── nmdc_XXXXXX_pairedMapped.sam.gz
     └── nmdc_XXXXXX_pairedMapped_sorted.bam
 
-
-The output directory will contain following files for long reads::
-
+The output directory will contain the following files for long reads::
 
     output/
     ├── nmdc_XXXXXX_assembly.legend
@@ -127,7 +126,7 @@ The output directory will contain following files for long reads::
     ├── nmdc_XXXXXX_pairedMapped_sorted.bam
     ├── nmdc_XXXXXX_read_count_report.txt
     ├── nmdc_XXXXXX_metaAsm.info
-    ├── nmdc_XXXXXX__summary.stats
+    ├── nmdc_XXXXXX_summary.stats
     ├── nmdc_XXXXXX_scaffolds.fna
     ├── nmdc_XXXXXX_pairedMapped.sam.gz
     ├── stats.json
@@ -136,38 +135,35 @@ The output directory will contain following files for long reads::
     ├── nmdc_XXXXXX_assembly.agp
     └── nmdc_XXXXXX_contigs.sorted.bam.pileup.out
 
+Example output stats JSON file::
 
-Part of an example output stats JSON file is shown below:
-
-```
-{
-   "scaffolds": 58,
-   "contigs": 58,
-   "scaf_bp": 28406,
-   "contig_bp": 28406,
-   "gap_pct": 0.00000,
-   "scaf_N50": 21,
-   "scaf_L50": 536,
-   "ctg_N50": 21,
-   "ctg_L50": 536,
-   "scaf_N90": 49,
-   "scaf_L90": 317,
-   "ctg_N90": 49,
-   "ctg_L90": 317,
-   "scaf_logsum": 22.158,
-   "scaf_powsum": 2.245,
-   "ctg_logsum": 22.158,
-   "ctg_powsum": 2.245,
-   "asm_score": 0.000,
-   "scaf_max": 1117,
-   "ctg_max": 1117,
-   "scaf_n_gt50K": 0,
-   "scaf_l_gt50K": 0,
-   "scaf_pct_gt50K": 0.0,
-   "gc_avg": 0.39129,
-   "gc_std": 0.03033
-}
-```
+    {
+       "scaffolds": 58,
+       "contigs": 58,
+       "scaf_bp": 28406,
+       "contig_bp": 28406,
+       "gap_pct": 0.00000,
+       "scaf_N50": 21,
+       "scaf_L50": 536,
+       "ctg_N50": 21,
+       "ctg_L50": 536,
+       "scaf_N90": 49,
+       "scaf_L90": 317,
+       "ctg_N90": 49,
+       "ctg_L90": 317,
+       "scaf_logsum": 22.158,
+       "scaf_powsum": 2.245,
+       "ctg_logsum": 22.158,
+       "ctg_powsum": 2.245,
+       "asm_score": 0.000,
+       "scaf_max": 1117,
+       "ctg_max": 1117,
+       "scaf_n_gt50K": 0,
+       "scaf_l_gt50K": 0,
+       "scaf_pct_gt50K": 0.0,
+       "gc_avg": 0.39129,
+       "gc_std": 0.03033
+    }
 
 
 The table provides all of the output directories, files, and their descriptions.

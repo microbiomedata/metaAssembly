@@ -1,5 +1,5 @@
 Metagenome Assembly Workflow (v1.0.2)
-========================================
+=====================================
 
 .. image:: workflow_assembly.png
    :scale: 60%

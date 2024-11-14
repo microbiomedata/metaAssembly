@@ -1,6 +1,6 @@
 version 1.0
 workflow jgi_metaASM {
-    input{
+    input {
         # String? outdir
         String? memory
         String? threads
@@ -11,7 +11,7 @@ workflow jgi_metaASM {
         # Float uniquekmer=1000
         String bbtools_container="microbiomedata/bbtools:38.96"
         String spades_container="staphb/spades:4.0.0"
-        String worflowmeta_container="microbiomedata/workflowmeta:1.1.1"
+        String workflowmeta_container="microbiomedata/workflowmeta:1.1.1"
         Boolean paired = true
         }
 
@@ -65,7 +65,7 @@ workflow jgi_metaASM {
         proj=proj,
         prefix=prefix,
         # start=stage.start, 
-        container=worflowmeta_container,
+        container=workflowmeta_container,
         fasta=create_agp.outcontigs,
         scaffold=create_agp.outscaffolds,
         agp=create_agp.outagp,
@@ -93,7 +93,7 @@ workflow jgi_metaASM {
     #     samgz_name=basename(finish_asm.outcontigs),
     #     covstats_name=basename(finish_asm.outcontigs),
     #     asmstats_name=basename(finish_asm.outcontigs),
-    #     container = worflowmeta_container
+    #     container = workflowmeta_container
     # }
  
     output {
@@ -117,13 +117,14 @@ workflow jgi_metaASM {
 }
 
 task stage {
-   input{ 
+   input { 
    String container
    String? input_file
    String memory = "4G"
    String target = "staged.fastq.gz"
    String output1 = "input.left.fastq.gz"
-   String output2 = "input.right.fastq.gz"}
+   String output2 = "input.right.fastq.gz"
+   }
 
    command <<<
        set -euo pipefail
@@ -143,7 +144,7 @@ task stage {
 
    >>>
 
-   output{
+   output {
       Array[File] assembly_input = [output1, output2]
       String start = read_string("start.txt")
    }
@@ -187,7 +188,7 @@ task make_info_file {
 }
 
 task finish_asm {
-    input{
+    input {
     File fasta
     File scaffold
     File? agp
@@ -203,6 +204,7 @@ task finish_asm {
     String sed="s/~{orig_prefix}_/~{proj}_/g"
     # String start
     }
+
     command<<<
 
         set -euo pipefail
@@ -250,7 +252,7 @@ task finish_asm {
 
 
 task read_mapping_pairs{
-    input{
+    input {
     Array[File] reads
     File ref
     String container
@@ -274,7 +276,7 @@ task read_mapping_pairs{
         cpu:  16
         maxRetries: 1
      }
-    command{
+    command<<<
         set -euo pipefail
         if [[ ~{reads[0]}  == *.gz ]] ; then
              cat ~{sep=" " reads} > infile.fastq.gz
@@ -314,8 +316,9 @@ task read_mapping_pairs{
 
         ln -s ~{filename_cov} mapping_stats.txt
         rm $mapping_input
-  }
-  output{
+
+    >>>
+    output {
       File outbamfile = filename_sorted
       File outbamfileidx = filename_sorted_idx
       File outcovfile = filename_cov
@@ -324,7 +327,7 @@ task read_mapping_pairs{
 }
 
 task create_agp {
-    input{
+    input {
     File scaffolds_in
     String? memory
     String container
@@ -340,7 +343,7 @@ task create_agp {
             memory: "120 GiB"
         cpu:  16
      }
-    command{
+    command<<<
         set -euo pipefail
         fungalrelease.sh \
         ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx105G" } \
@@ -361,8 +364,10 @@ task create_agp {
         fi
         bbstats.sh format=8 in=~{filename_scaffolds} out=stats.json
         sed -i 's/l_gt50k/l_gt50K/g' stats.json
-    }
-    output{
+
+    >>>
+
+    output {
     File outcontigs = filename_contigs
     File outscaffolds = filename_scaffolds
     File outagp = filename_agp
@@ -385,11 +390,11 @@ task assy {
      Boolean paired = true
     }
      runtime {
-            docker: container
-            memory: "120 GiB"
-            cpu:  16
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
      }
-     command{
+     command <<<
         set -euo pipefail
         if ~{paired}; then
             spades.py \
@@ -410,7 +415,8 @@ task assy {
             -t ~{spades_cpu} \
             -s ~{infile1}
         fi
-     }
+    >>>
+
      output {
             File out = filename_outfile
             File outlog = filename_spadeslog
@@ -433,12 +439,12 @@ task bbcms {
      String filename_counts="counts.metadata.json"
     }
      runtime {
-            docker: container
-            memory: "120 GiB"
+        docker: container
+        memory: "120 GiB"
         cpu:  16
      }
 
-     command {
+    command<<<
         set -euo pipefail
         if file --mime -b ~{input_files[0]} | grep gzip; then
              cat ~{sep=" " input_files} > infile.fastq.gz
@@ -478,7 +484,8 @@ task bbcms {
 
         rm $bbcms_input
         
-     }
+    >>>
+
      output {
             File out = filename_outfile
             File out1 = if paired then filename_outfile1 else filename_outfile
@@ -534,4 +541,3 @@ task bbcms {
 #         File? outasmstats = "~{outdir}/~{asmstats_name}"
 #     }
 # }
-

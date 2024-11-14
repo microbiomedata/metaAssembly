@@ -3,7 +3,7 @@ import "shortReads_assembly.wdl" as srma
 import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
 import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/raw/bc7c4371ea0fa83355bada341ec353b9feb3eff2/metagenome_improved/metaflye.wdl" as lrma
 
-workflow jgi_metaAssembly{
+workflow jgi_metaAssembly {
     input {  
         Boolean shortRead
         String proj
@@ -20,62 +20,60 @@ workflow jgi_metaAssembly{
         String minimap2_container = "staphb/minimap2:2.25"
         String minimap2_parameters = "-a -x map-hifi -t 32"
         String samtools_container = "staphb/samtools:1.18"
-        String bbtools_container = "microbiomedata/bbtools:38.96"
+        String bbtools_container = "microbiomedata/bbtools:39.03"
         String spades_container="staphb/spades:4.0.0"
     }
 
 
     if (shortRead) {
-    	if (length(input_files) > 1){
-        	call int.make_interleaved_reads{
-			input:
-			input_files = input_files,
-            container = bbtools_container
-
+    	if (length(input_files) > 1) {
+        	call int.make_interleaved_reads {
+                input:
+                    input_files = input_files,
+                    container = "microbiomedata/bbtools:38.96"
        		}
     	}
-        call srma.jgi_metaASM{
+        call srma.jgi_metaASM {
             input:
-            memory = memory,
-            threads = threads,
-            input_file = if length(input_files) > 1 then make_interleaved_reads.interleaved_fastq else input_files[0],
-            proj = proj,
-            bbtools_container = bbtools_container,
-            spades_container = spades_container
-
+                memory = memory,
+                threads = threads,
+                input_file = if length(input_files) > 1 then make_interleaved_reads.interleaved_fastq else input_files[0],
+                proj = proj,
+                bbtools_container = "microbiomedata/bbtools:38.96",
+                spades_container = spades_container
         }
         
     }
     if (!shortRead) {
-        call lrma.metaflye{
+        call lrma.metaflye {
             input:
-            proj = proj,
-            input_fastq = input_files,
-            flye_container = flye_container,
-            flye_parameters = flye_parameters,
-            smrtlink_container = smrtlink_container, 
-            racon_container = racon_container,
-            minimap2_container = minimap2_container,
-            minimap2_parameters = minimap2_parameters, 
-            samtools_container = samtools_container,
-            bbtools_container = bbtools_container
+                proj = proj,
+                input_fastq = input_files,
+                flye_container = flye_container,
+                flye_parameters = flye_parameters,
+                smrtlink_container = smrtlink_container, 
+                racon_container = racon_container,
+                minimap2_container = minimap2_container,
+                minimap2_parameters = minimap2_parameters, 
+                samtools_container = samtools_container,
+                bbtools_container = bbtools_container
         }
-        call finish_lrasm{
+        call finish_lrasm {
             input: 
-            proj = proj,
-            prefix = prefix,
-            container = bbtools_container,
-            contigs = metaflye.final_contigs,
-            bam = metaflye.final_bam, 
-            scaffolds = metaflye.final_scaffolds,
-            agp = metaflye.final_agp,
-            legend = metaflye.final_legend,
-            basecov = metaflye.final_basecov,
-            sam = metaflye.final_sam,    
-            output_file = metaflye.final_output_file,
-            stats = metaflye.final_stats,
-            summary_stats = metaflye.final_summary_stats,
-            pileup_out = metaflye.final_pileup_out
+                proj = proj,
+                prefix = prefix,
+                container = bbtools_container,
+                contigs = metaflye.final_contigs,
+                bam = metaflye.final_bam, 
+                scaffolds = metaflye.final_scaffolds,
+                agp = metaflye.final_agp,
+                legend = metaflye.final_legend,
+                basecov = metaflye.final_basecov,
+                sam = metaflye.final_sam,    
+                output_file = metaflye.final_output_file,
+                stats = metaflye.final_stats,
+                summary_stats = metaflye.final_summary_stats,
+                pileup_out = metaflye.final_pileup_out
         }
     }
     output {
@@ -100,33 +98,34 @@ workflow jgi_metaAssembly{
         File? sr_bam=jgi_metaASM.bam
         File? sr_samgz=jgi_metaASM.samgz
         File? sr_covstats=jgi_metaASM.covstats
-        File? sr_asmstats=jgi_metaASM.asmstats
         File? sr_asminfo=jgi_metaASM.asminfo
         File? sr_bbcms_fq = jgi_metaASM.bbcms_fastq
-          
+
+        #Both
+        File? stats = if (shortRead) then jgi_metaASM.asmstats else finish_lrasm.asm_stats
     }
 }
 
 
 task finish_lrasm {
     input {
-    File contigs
-    File bam
-    File scaffolds
-    File agp
-    File legend
-    File basecov
-    File sam
-    File output_file
-    File stats
-    File summary_stats
-    File pileup_out
-    String container
-    String proj
-    String prefix 
-    String orig_prefix="scaffold"
-    String sed="s/~{orig_prefix}_/~{proj}_/g"
-    # String start
+        File contigs
+        File bam
+        File scaffolds
+        File agp
+        File legend
+        File basecov
+        File sam
+        File output_file
+        File stats
+        File summary_stats
+        File pileup_out
+        String container
+        String proj
+        String prefix 
+        String orig_prefix="scaffold"
+        String sed="s/~{orig_prefix}_/~{proj}_/g"
+        # String start
     }
     command<<<
 
@@ -144,12 +143,17 @@ task finish_lrasm {
         cat ~{basecov} | sed ~{sed} > ~{prefix}_contigs.sorted.bam.pileup.basecov
         cat ~{pileup_out} | sed ~{sed} > ~{prefix}_contigs.sorted.bam.pileup.out
 
-       ## Bam file     
-       samtools view -h ~{bam} | sed ~{sed} | \
-          samtools view -hb -o ~{prefix}_pairedMapped_sorted.bam
-       ## Sam.gz file
-       samtools view -h ~{sam} | sed ~{sed} | \
-          gzip -c - > ~{prefix}_pairedMapped.sam.gz
+        ## Bam file     
+        samtools view -h ~{bam} | sed ~{sed} | \
+            samtools view -hb -o ~{prefix}_pairedMapped_sorted.bam
+        ## Sam.gz file
+        samtools view -h ~{sam} | sed ~{sed} | \
+            gzip -c - > ~{prefix}_pairedMapped.sam.gz
+        
+        # stats file
+        bbstats.sh format=8 in=~{scaffolds} out=stats.json
+        sed -i 's/l_gt50k/l_gt50K/g' stats.json
+        cat stats.json |jq 'del(.filename)' > stats.json
 
     >>>
     output {
@@ -164,6 +168,7 @@ task finish_lrasm {
         File final_stats = "~{prefix}_contigs.sam.stats"
         File final_summary_stats = "~{prefix}_summary.stats"
         File final_pileup_out = "~{prefix}_contigs.sorted.bam.pileup.out"
+        File asm_stats = "stats.json"
     }
 
     runtime {

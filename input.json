@@ -1,7 +1,7 @@
 {
-  "jgi_metaAssembly.input_files":["https://data.microbiomedata.org/data/test_data/11809.7.220839.TCCTGAG-ACTGCAT.fastq.gz"],
+  "jgi_metaAssembly.input_files":["/global/cfs/cdirs/m3408/www/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz"],
   "jgi_metaAssembly.proj":"nmdc:503125_160870",
   "jgi_metaAssembly.memory": "105G",
   "jgi_metaAssembly.threads": "16",
-  "jgi_metaAssembly.shortRead": true
+  "jgi_metaAssembly.shortRead": false
 }

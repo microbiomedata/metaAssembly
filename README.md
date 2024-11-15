@@ -1,48 +1,40 @@
 # The Metagenome Assembly Pipeline
 
 ## Summary
-This workflow is developed by Brian Foster at JGI and original from his [repo](https://gitlab.com/bfoster1/wf_templates/tree/master/templates). It take paired-end reads runs error correction by bbcms (BBTools). The clean reads are assembled by MetaSpades. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information.
+This workflow is developed by Brian Foster at JGI and original from his [repo](https://gitlab.com/bfoster1/wf_templates/tree/master/templates). It takes in paired-end Illumina short reads or PacBio long reads. 
 
-## Running Workflow in Cromwell
+In short reads, the workflow reformats the interleaved file into two FASTQ files for downstream tasks using bbcms (BBTools). The corrected reads are assembled using metaSPAdes. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information. The `.wdl` (Workflow Description Language) file includes five tasks: *bbcms*, *assy*, *create_agp*, *read_mapping_pairs*, and *make_output*.
 
-Description of the files:
- - `.wdl` file: the WDL file for workflow definition
- - `.json` file: the example input for the workflow
- - `.conf` file: the conf file for running Cromwell.
- - `.sh` file: the shell script for running the example workflow
+In long reads, the workflow uses Flye for assembly, pbmm2 for alignment, Racon for polishing, and minimap2 for read mapping and coverage analysis. The :literal:`.wdl` (Workflow Description Language) file includes six tasks: *combine_fastq*, *assy*, *racon*, *format_assembly*, *map*, and *make_info_file*.
+
 
 ## The Docker image and Dockerfile can be found here
 
-[microbiomedata/bbtools:38.96](https://hub.docker.com/r/microbiomedata/bbtools)
+[microbiomedata/bbtools:39.03](https://hub.docker.com/r/microbiomedata/bbtools)
 
-[microbiomedata/spades:3.15.0](https://hub.docker.com/r/microbiomedata/spades)
+[microbiomedata/spades:4.0.0](https://hub.docker.com/r/microbiomedata/spades)
 
 
 ## Input files
 
-1. fastq (illumina paired-end interleaved fastq)
+1. The path to the input FASTQ file (Illumina paired-end interleaved FASTQ or PacBio paired-end interleaved FASTQ) (recommended: output of the Reads QC workflow).
     
-2. contig prefix for fasta header
+2. Project name: nmdc:XXXXXX
     
-3. project name 
+3. Memory (optional) e.g., `"jgi_metaAssembly.memory": "105G"`
 
-4. resource where run the workflow
+4. Threads (optional) e.g., `"jgi_metaAssembly.threads": "16"`
 
-5. informed_by 
+5. Whether the input is short reads (boolean) 
 
-6. memory (optional) ex: "jgi_metaASM.memory": "105G"
-
-7. threads (optional) ex: "jgi_metaASM.threads": "16"
 
 ```
 {
-  "jgi_metaASM.input_file":"/global/cfs/projectdirs/m3408/ficus/11809.7.220839.TCCTGAG-ACTGCAT.fastq.gz",
-  "jgi_metaASM.rename_contig_prefix":"503125_160870",
-  "jgi_metaASM.proj":"nmdc:503125_160870",
-  "jgi_metaASM.resource": "NERSC -- perlmutter",
-  "jgi_metaASM.informed_by": "nmdc:xxxxxx",
-  "jgi_metaASM.memory": "105G",
-  "jgi_metaASM.threads": "16"
+        "jgi_metaAssembly.input_files": ["https://portal.nersc.gov/project/m3408/test_data/smalltest.int.fastq.gz"],
+        "jgi_metaAssembly.proj": "nmdc:XXXXXX",
+        "jgi_metaAssembly.memory": "105G",
+        "jgi_metaAssembly.threads": "16",
+        "jgi_metaAssembly.shortRead": true
 }
 ```
 
@@ -51,31 +43,33 @@ Description of the files:
 Below is a part list of all output files. The main assembly contigs output is in final_assembly/assembly.contigs.fasta.
 
 ```
-	├── bbcms
-	│   ├── berkeleylab-jgi-meta-60ade422cd4e
-	│   ├── counts.metadata.json
-	│   ├── input.corr.fastq.gz
-	│   ├── input.corr.left.fastq.gz
-	│   ├── input.corr.right.fastq.gz
-	│   ├── readlen.txt
-	│   └── unique31mer.txt
-	├── final_assembly
-	│   ├── assembly.agp
-	│   ├── assembly_contigs.fna
-	│   ├── assembly_scaffolds.fna
-	│   └── assembly_scaffolds.legend
-	├── mapping
-	│   ├── covstats.txt (mapping_stats.txt)
-	│   ├── pairedMapped.bam
-	│   ├── pairedMapped.sam.gz
-	│   ├── pairedMapped_sorted.bam
-	│   └── pairedMapped_sorted.bam.bai
-	└── spades3
-		├── assembly_graph.fastg
-		├── assembly_graph_with_scaffolds.gfa
-		├── contigs.fasta
-		├── contigs.paths
-		├── scaffolds.fasta
-		└── scaffolds.paths	
+# Short Reads
+    output/
+    ├── nmdc_XXXXXX_metaAsm.info
+    ├── nmdc_XXXXXX_covstats.txt
+    ├── nmdc_XXXXXX_contigs.fna
+    ├── nmdc_XXXXXX_bbcms.fastq.gz
+    ├── nmdc_XXXXXX_scaffolds.fna
+    ├── nmdc_XXXXXX_assembly.agp
+    ├── stats.json
+    ├── nmdc_XXXXXX_pairedMapped.sam.gz
+    └── nmdc_XXXXXX_pairedMapped_sorted.bam
+# Long Reads
+    output/
+    ├── nmdc_XXXXXX_assembly.legend
+    ├── nmdc_XXXXXX_contigs.fna
+    ├── nmdc_XXXXXX_pairedMapped_sorted.bam
+    ├── nmdc_XXXXXX_read_count_report.txt
+    ├── nmdc_XXXXXX_metaAsm.info
+    ├── nmdc_XXXXXX_summary.stats
+    ├── nmdc_XXXXXX_scaffolds.fna
+    ├── nmdc_XXXXXX_pairedMapped.sam.gz
+    ├── stats.json
+    ├── nmdc_XXXXXX_contigs.sam.stats
+    ├── nmdc_XXXXXX_contigs.sorted.bam.pileup.basecov
+    ├── nmdc_XXXXXX_assembly.agp
+    └── nmdc_XXXXXX_contigs.sorted.bam.pileup.out
 ```
+## Link to Doc Site
+Please refer [here](https://nmdc-workflow-documentation.readthedocs.io/en/latest/chapters/3_MetaGAssemly_index.html) for more information.
 

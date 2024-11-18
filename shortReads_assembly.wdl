@@ -9,7 +9,7 @@ workflow jgi_metaASM {
         String prefix=sub(proj, ":", "_")
         String rename_contig_prefix="scaffold"
         # Float uniquekmer=1000
-        String bbtools_container="microbiomedata/bbtools:38.96"
+        String bbtools_container="microbiomedata/bbtools:39.03"
         String spades_container="staphb/spades:4.0.0"
         String workflowmeta_container="microbiomedata/workflowmeta:1.1.1"
         Boolean paired = true

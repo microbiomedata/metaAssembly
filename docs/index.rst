@@ -2,7 +2,6 @@ Metagenome Assembly Workflow (v1.0.7)
 =====================================
 
 .. image:: lrassy_workflow2024.svg
-   :scale: 60%
    :alt: Metagenome assembly workflow dependencies
 
 Workflow Overview

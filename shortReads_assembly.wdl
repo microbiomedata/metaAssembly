@@ -119,7 +119,7 @@ workflow jgi_metaASM {
 task stage {
    input { 
    String container
-   String? input_file
+   File? input_file
    String memory = "4G"
    String target = "staged.fastq.gz"
    String output1 = "input.left.fastq.gz"

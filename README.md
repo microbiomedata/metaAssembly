@@ -71,5 +71,5 @@ Below is a part list of all output files. The main assembly contigs output is in
     └── nmdc_XXXXXX_contigs.sorted.bam.pileup.out
 ```
 ## Link to Doc Site
-Please refer [here](https://nmdc-workflow-documentation.readthedocs.io/en/latest/chapters/3_MetaGAssemly_index.html) for more information.
+Please refer [here](https://docs.microbiomedata.org/workflows/chapters/4_Metagenome_Assembly/) for more information.
 

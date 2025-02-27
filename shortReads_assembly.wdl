@@ -4,7 +4,7 @@ workflow jgi_metaASM {
         # String? outdir
         String? memory
         String? threads
-        String? input_file
+        File? input_file
         String proj
         String prefix=sub(proj, ":", "_")
         String rename_contig_prefix="scaffold"
@@ -119,7 +119,7 @@ workflow jgi_metaASM {
 task stage {
    input { 
    String container
-   String? input_file
+   File? input_file
    String memory = "4G"
    String target = "staged.fastq.gz"
    String output1 = "input.left.fastq.gz"
@@ -150,6 +150,7 @@ task stage {
    }
    runtime {
      cpu:  2
+     memory: "4 GiB"
      maxRetries: 1
      docker: container
    }
@@ -341,7 +342,7 @@ task create_agp {
     runtime {
             docker: container
             memory: "120 GiB"
-        cpu:  16
+            cpu:  16
      }
     command<<<
         set -euo pipefail

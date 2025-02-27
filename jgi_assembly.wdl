@@ -12,7 +12,7 @@ workflow jgi_metaAssembly {
         String? memory
         String? threads
         # longReads parameters
-        Array[String] input_files
+        Array[File] input_files
         String flye_container = "staphb/flye:2.9.2"
         String flye_parameters = "--meta -o flye -t 32 --pacbio-hifi"
         String smrtlink_container = "bryce911/smrtlink:12.0.0.177059"
@@ -23,7 +23,6 @@ workflow jgi_metaAssembly {
         String bbtools_container = "microbiomedata/bbtools:39.03"
         String spades_container="staphb/spades:4.0.0"
     }
-
 
     if (shortRead) {
     	if (length(input_files) > 1) {

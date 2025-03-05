@@ -5,7 +5,7 @@ This workflow is developed by Brian Foster at JGI and original from his [repo](h
 
 In short reads, the workflow reformats the interleaved file into two FASTQ files for downstream tasks using bbcms (BBTools). The corrected reads are assembled using metaSPAdes. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information. The `.wdl` (Workflow Description Language) file includes five tasks: *bbcms*, *assy*, *create_agp*, *read_mapping_pairs*, and *make_output*.
 
-In long reads, the workflow uses Flye for assembly, pbmm2 for alignment, Racon for polishing, and minimap2 for read mapping and coverage analysis. The :literal:`.wdl` (Workflow Description Language) file includes six tasks: *combine_fastq*, *assy*, *racon*, *format_assembly*, *map*, and *make_info_file*.
+In long reads, the workflow uses Flye for assembly, pbmm2 for alignment, Racon for polishing, and minimap2 for read mapping and coverage analysis. The `.wdl` (Workflow Description Language) file includes six tasks: *combine_fastq*, *assy*, *racon*, *format_assembly*, *map*, and *make_info_file*.
 
 
 ## The Docker image and Dockerfile can be found here
@@ -19,7 +19,7 @@ In long reads, the workflow uses Flye for assembly, pbmm2 for alignment, Racon f
 
 1. The path to the input FASTQ file (Illumina paired-end interleaved FASTQ or PacBio paired-end interleaved FASTQ) (recommended: output of the Reads QC workflow).
     
-2. Project name: nmdc:XXXXXX
+2. Project name, e.g. `nmdc:XXXXXX`
     
 3. Memory (optional) e.g., `"jgi_metaAssembly.memory": "105G"`
 

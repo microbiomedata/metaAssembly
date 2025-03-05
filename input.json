@@ -1,5 +1,5 @@
 {
-  "jgi_metaAssembly.input_files":["https://portal.nersc.gov/project/m3408//test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz"],
+  "jgi_metaAssembly.input_files":["/global/homes/n/nmdcda/m3408/www/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz"],
   "jgi_metaAssembly.proj":"nmdc:XXXXXXXXX",
   "jgi_metaAssembly.memory": "105G",
   "jgi_metaAssembly.threads": "16",

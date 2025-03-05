@@ -1,6 +1,6 @@
 version 1.0
 import "shortReads_assembly.wdl" as srma
-import "make_interleaved_WDL/make_interleaved_reads.wdl" as int
+import "make_interleaved_reads.wdl" as int
 import "https://code.jgi.doe.gov/BFoster/jgi_meta_wdl/-/raw/bc7c4371ea0fa83355bada341ec353b9feb3eff2/metagenome_improved/metaflye.wdl" as lrma
 
 workflow jgi_metaAssembly {

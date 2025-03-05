@@ -48,12 +48,12 @@ The workflow is available on GitHub: `https://github.com/microbiomedata/metaAsse
 
 The corresponding Docker images are available on DockerHub:
 
-- `https://hub.docker.com/r/microbiomedata/spades`
-- `https://hub.docker.com/r/microbiomedata/bbtools`
-- `https://hub.docker.com/r/staphb/flye`
-- `https://hub.docker.com/r/staphb/racon`
-- `https://hub.docker.com/r/staphb/minimap2`
-- `https://hub.docker.com/r/staphb/samtools`
+- `microbiomedata/spades:4.0.0 <https://hub.docker.com/r/microbiomedata/spades>`_
+- `microbiomedata/bbtools:39.03 <https://hub.docker.com/r/microbiomedata/bbtools>`_
+- `staphb/flye:2.9.2 <https://hub.docker.com/r/staphb/flye>`_
+- `staphb/racon:1.4.20 <https://hub.docker.com/r/staphb/racon>`_
+- `staphb/minimap2:2.25 <https://hub.docker.com/r/staphb/minimap2>`_
+- `staphb/samtools:1.18 <https://hub.docker.com/r/staphb/samtools>`_
 
 Requirements for Execution
 --------------------------
@@ -102,9 +102,9 @@ Sample dataset(s)
 
 - Zymobiomics mock-community DNA control (`SRR7877884 <https://www.ncbi.nlm.nih.gov/sra/SRX4716743>`_); this `dataset <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/>`_ is has 6.7G bases.
 
-  - The non-interleaved raw fastq files are available as `R1 <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_1.fastq.gz>`_ and `R2 <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_2.fastq.gz>`
+  - The non-interleaved raw fastq files are available as `R1 <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_1.fastq.gz>`_ and `R2 <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_2.fastq.gz>`_
   - The interleaved file is `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-int.fastq.gz>`_
-  - A 10% subset of the interleaved file is available as a quick dataset `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-int-0.1.fastq.gz>`
+  - A 10% subset of the interleaved file is available as a quick dataset `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-int-0.1.fastq.gz>`_
 
 **Long Reads:**
 
@@ -117,9 +117,9 @@ Input
 A `JSON file <https://github.com/microbiomedata/metaAssembly/blob/master/input.json>`_ containing the following information:
 
 1. The path to the input FASTQ file (Illumina paired-end interleaved FASTQ or PacBio paired-end interleaved FASTQ) (recommended: output of the Reads QC workflow).
-2. Project name: nmdc:XXXXXX
-3. Memory (optional) e.g., `"jgi_metaAssembly.memory": "105G"`
-4. Threads (optional) e.g., `"jgi_metaAssembly.threads": "16"`
+2. Project name example: :literal:`nmdc:XXXXXX`
+3. Memory (optional) e.g., :literal:`"jgi_metaAssembly.memory": "105G"`
+4. Threads (optional) e.g., :literal:`"jgi_metaAssembly.threads": "16"`
 5. Whether the input is short reads (boolean)
 
 Example input JSON for short reads::

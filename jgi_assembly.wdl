@@ -12,7 +12,7 @@ workflow jgi_metaAssembly {
         String? memory
         String? threads
         # longReads parameters
-        Array[File] input_files
+        Array[String] input_files
         String flye_container = "staphb/flye:2.9.2"
         String flye_parameters = "--meta -o flye -t 32 --pacbio-hifi"
         String smrtlink_container = "bryce911/smrtlink:12.0.0.177059"

@@ -2,7 +2,7 @@
 version 1.0
 workflow make_interleaved_reads {
 	input{
-	Array[File] input_files
+	Array[String] input_files
 	String output_file = "interleaved.fastq.gz"
 	String container="microbiomedata/bbtools:38.96"
 	}
@@ -29,7 +29,7 @@ workflow make_interleaved_reads {
 
 task interleave_reads{
 	input{
-	Array[File] input_files
+	Array[String] input_files
 	String output_file = "interleaved.fastq.gz"
 	String container
 	}

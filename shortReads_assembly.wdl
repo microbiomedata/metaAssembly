@@ -9,7 +9,7 @@ workflow jgi_metaASM {
         String prefix=sub(proj, ":", "_")
         String rename_contig_prefix="scaffold"
         # Float uniquekmer=1000
-        String bbtools_container="microbiomedata/bbtools:38.96"
+        String bbtools_container="microbiomedata/bbtools:39.03"
         String spades_container="staphb/spades:4.0.0"
         String workflowmeta_container="microbiomedata/workflowmeta:1.1.1"
         Boolean paired = true
@@ -150,6 +150,7 @@ task stage {
    }
    runtime {
      cpu:  2
+     memory: "4 GiB"
      maxRetries: 1
      docker: container
    }
@@ -341,7 +342,7 @@ task create_agp {
     runtime {
             docker: container
             memory: "120 GiB"
-        cpu:  16
+            cpu:  16
      }
     command<<<
         set -euo pipefail

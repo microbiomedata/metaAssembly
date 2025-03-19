@@ -30,7 +30,7 @@ workflow jgi_metaAssembly {
         	call int.make_interleaved_reads {
                 input:
                     input_files = input_files,
-                    container = "microbiomedata/bbtools:38.96"
+                    container = bbtools_container
        		}
     	}
         call srma.jgi_metaASM {
@@ -39,7 +39,7 @@ workflow jgi_metaAssembly {
                 threads = threads,
                 input_file = if length(input_files) > 1 then make_interleaved_reads.interleaved_fastq else input_files[0],
                 proj = proj,
-                bbtools_container = "microbiomedata/bbtools:38.96",
+                bbtools_container = bbtools_container,
                 spades_container = spades_container
         }
         

@@ -152,7 +152,7 @@ task finish_lrasm {
         # stats file
         bbstats.sh format=8 in=~{scaffolds} out=stats.json
         sed -i 's/l_gt50k/l_gt50K/g' stats.json
-        cat stats.json |jq 'del(.filename)' > stats.json
+        cat stats.json |jq 'del(.filename)' > stats.json.tmp && mv stats.json.tmp stats.json
 
     >>>
     output {

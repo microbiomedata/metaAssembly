@@ -230,7 +230,7 @@ task finish_asm {
           gzip -c - > ~{prefix}_pairedMapped.sam.gz
 
        # Remove an extra field from the stats
-       cat ~{asmstats} |jq 'del(.filename)' > stats.json
+       cat ~{asmstats} |jq 'del(.filename)' > stats.json.tmp && mv stats.json.tmp stats.json
 
     >>>
     output {

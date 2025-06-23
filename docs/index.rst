@@ -106,17 +106,17 @@ For best results, using datasets that have already gone through ReadsQC is stron
   - The non-interleaved raw fastq files are available as `R1 <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_1.fastq.gz>`_ and `R2 <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_2.fastq.gz>`_
   - The interleaved file is `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-int.fastq.gz>`_
 
-     - `Cleaned File <https://portal.nersc.gov/project/m3408//test_data/SRR7877884/SRR7877884_MetaG/ReadsQC/SRR7877884-int.fq.gz>`_
+     - `ReadsQC Cleaned File <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_MetaG/ReadsQC/SRR7877884-int/SRR7877884-int.filtered.gz>`_
 
   - A 10% subset of the interleaved file is available as a quick dataset `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-int-0.1.fastq.gz>`_
 
-     - `Cleaned File <https://portal.nersc.gov/project/m3408//test_data/SRR7877884/SRR7877884-0.1_MetaG/ReadsQC/SRR7877884-int-0.1.fastq.gz>`_
+     - `ReadsQC Cleaned File <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-0.1_MetaG/ReadsQC/SRR7877884-int-0/SRR7877884-int-0.filtered.gz>`_
 
 **Long-Reads:**
 
-Zymobiomics synthetic metagenome (`SRR13128014 <https://portal.nersc.gov/cfs/m3408/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz>`_) For testing we have subsampled the dataset, the original dataset is ~18GB. 
+Zymobiomics synthetic metagenome (`SRR13128014 <https://portal.nersc.gov/cfs/m3408/test_data/SRR13128014.pacbio.subsample/SRR13128014.pacbio.subsample.ccs.fastq.gz>`_) For testing we have subsampled the dataset (~57MB), the original dataset is ~18G of bases.
 
-   - `Cleaned File <https://portal.nersc.gov/project/m3408//test_data/SRR13128014.pacbio.subsample/ReadsQC/SRR13128014.pacbio.subsample.fastq.gz>`_
+   - `ReadsQC Cleaned File <https://portal.nersc.gov/cfs/m3408/test_data/SRR13128014.pacbio.subsample/ReadsQC/SRR13128014.pacbio.subsample.fastq/SRR13128014.pacbio.subsample.fastq_filtered.fastq.gz>`_
 
 
 Input
@@ -247,9 +247,9 @@ Directory                                           File Name                   
 /finish_lrasm                                        nmdc_XXXXXX_contigs.sorted.bam.pileup.out            BAM file pileup output for contigs
 =================================================== ===================================================== ===============================================================
 
-Download the example MetaAssembly output for the short-reads Illumina run SRR7877884 (10% subset) `here <https://portal.nersc.gov/project/m3408//test_data/SRR7877884/SRR7877884-0.1_MetaG/MetagenomeAssembly/>`_.
+Download the example MetaAssembly output for the short-reads Illumina run SRR7877884 (10% subset) `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-0.1_MetaG/MetagenomeAssembly/>`_.
 
-Download the example ReadsQC output for the long-reads PacBio run SRR13128014 `here <https://portal.nersc.gov/project/m3408//test_data/SRR13128014.pacbio.subsample/MetagenomeAssembly/>`_.
+Download the example MetaAssembly output for the long-reads PacBio run SRR13128014 `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR13128014.pacbio.subsample/MetagenomeAssembly/>`_.
 
 Version History
 ---------------

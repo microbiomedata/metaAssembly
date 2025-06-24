@@ -15,11 +15,11 @@ Metagenome Assembly Workflow (v1.0.7)
 Workflow Overview
 -----------------
 
-This workflow takes in paired-end Illumina short reads or PacBio long reads.
+This workflow takes in paired-end Illumina short-reads or PacBio long-reads.
 
-**Short Reads**:
+**Short-Reads**:
 
-In short reads, the workflow reformats the interleaved file into two FASTQ files for downstream tasks using bbcms (BBTools). The corrected reads are assembled using metaSPAdes. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information. The `.wdl` (Workflow Description Language) file includes five tasks: *bbcms*, *assy*, *create_agp*, *read_mapping_pairs*, and *make_output*.
+In short-reads, the workflow reformats the interleaved file into two FASTQ files for downstream tasks using bbcms (BBTools). The corrected reads are assembled using metaSPAdes. After assembly, the reads are mapped back to contigs by bbmap (BBTools) for coverage information. The `.wdl` (Workflow Description Language) file includes five tasks: *bbcms*, *assy*, *create_agp*, *read_mapping_pairs*, and *make_output*.
 
 1. The *bbcms* task takes in interleaved FASTQ inputs, performs error correction, and reformats the interleaved FASTQ into two output FASTQ files for paired-end reads for the next tasks. 
 2. The *assy* task performs metaSPAdes assembly.
@@ -27,9 +27,9 @@ In short reads, the workflow reformats the interleaved file into two FASTQ files
 4. The *read_mapping_pairs* task maps reads back to the final assembly to generate coverage information.
 5. The final *make_output* task collects all output files into the specified directory.
 
-**Long Reads**:
+**Long-Reads**:
 
-In long reads, the workflow uses Flye for assembly, pbmm2 for alignment, Racon for polishing, and minimap2 for read mapping and coverage analysis. The :literal:`.wdl` (Workflow Description Language) file includes six tasks: *combine_fastq*, *assy*, *racon*, *format_assembly*, *map*, and *make_info_file*.
+In long-reads, the workflow uses Flye for assembly, pbmm2 for alignment, Racon for polishing, and minimap2 for read mapping and coverage analysis. The :literal:`.wdl` (Workflow Description Language) file includes six tasks: *combine_fastq*, *assy*, *racon*, *format_assembly*, *map*, and *make_info_file*.
 
 1. The *combine_fastq* task combines the input FASTQ files into a single FASTQ file, which is used as input for polishing and mapping tasks.
 2. The *assy* task takes in the input FASTQ files and performs assembly using Flye.
@@ -93,8 +93,9 @@ Third-party software: (This is included in the Docker image.)
 
 Sample dataset(s)
 -----------------
+For best results, using datasets that have already gone through ReadsQC is strongly encouraged.
 
-**Short Reads:**
+**Short-Reads:**
 
 - Small dataset: `Ecoli 10x (287M) <https://portal.nersc.gov/cfs/m3408/test_data/metaAssembly_small_test_data.tgz>`_ (Input/output included in tar.gz file)
 
@@ -104,11 +105,18 @@ Sample dataset(s)
 
   - The non-interleaved raw fastq files are available as `R1 <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_1.fastq.gz>`_ and `R2 <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_2.fastq.gz>`_
   - The interleaved file is `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-int.fastq.gz>`_
+
+     - `ReadsQC Cleaned File <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884_MetaG/ReadsQC/SRR7877884-int/SRR7877884-int.filtered.gz>`_
+
   - A 10% subset of the interleaved file is available as a quick dataset `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-int-0.1.fastq.gz>`_
 
-**Long Reads:**
+     - `ReadsQC Cleaned File <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-0.1_MetaG/ReadsQC/SRR7877884-int-0/SRR7877884-int-0.filtered.gz>`_
 
-Zymobiomics synthetic metagenome (`SRR13128014 <https://portal.nersc.gov/cfs/m3408/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz>`_) For testing we have subsampled the dataset, the original dataset is ~18GB.
+**Long-Reads:**
+
+Zymobiomics synthetic metagenome (`SRR13128014 <https://portal.nersc.gov/cfs/m3408/test_data/SRR13128014.pacbio.subsample/SRR13128014.pacbio.subsample.ccs.fastq.gz>`_) For testing we have subsampled the dataset (~57MB), the original dataset is ~18G of bases.
+
+   - `ReadsQC Cleaned File <https://portal.nersc.gov/cfs/m3408/test_data/SRR13128014.pacbio.subsample/ReadsQC/SRR13128014.pacbio.subsample.fastq/SRR13128014.pacbio.subsample.fastq_filtered.fastq.gz>`_
 
 
 Input
@@ -120,9 +128,9 @@ A `JSON file <https://github.com/microbiomedata/metaAssembly/blob/master/input.j
 2. Project name example: :literal:`nmdc:XXXXXX`
 3. Memory (optional) e.g., :literal:`"jgi_metaAssembly.memory": "105G"`
 4. Threads (optional) e.g., :literal:`"jgi_metaAssembly.threads": "16"`
-5. Whether the input is short reads (boolean)
+5. Whether the input is short-reads (boolean)
 
-Example input JSON for short reads::
+Example input JSON for short-reads::
 
     {
         "jgi_metaAssembly.input_files": ["https://portal.nersc.gov/project/m3408/test_data/smalltest.int.fastq.gz"],
@@ -132,7 +140,7 @@ Example input JSON for short reads::
         "jgi_metaAssembly.shortRead": true
     }
 
-Example input JSON for long reads::
+Example input JSON for long-reads::
 
     {
         "jgi_metaAssembly.input_files": ["/global/cfs/cdirs/m3408/www/test_data/SRR13128014.pacbio.subsample.ccs.fastq.gz"],
@@ -145,7 +153,7 @@ Example input JSON for long reads::
 Output
 ------
 
-The output directory will contain the following files for short reads::
+The output directory will contain the following files for short-reads::
 
     output/
     ├── nmdc_XXXXXX_metaAsm.info
@@ -158,7 +166,7 @@ The output directory will contain the following files for short reads::
     ├── nmdc_XXXXXX_pairedMapped.sam.gz
     └── nmdc_XXXXXX_pairedMapped_sorted.bam
 
-The output directory will contain the following files for long reads::
+The output directory will contain the following files for long-reads::
 
     output/
     ├── nmdc_XXXXXX_assembly.legend
@@ -212,8 +220,8 @@ The table provides all of the output directories, files, and their descriptions.
 =================================================== ===================================================== ===============================================================
 Directory                                           File Name                                             Description
 =================================================== ===================================================== ===============================================================
-**Short Reads**                                                                                           Short reads assembly output directory
-/make_info_file                                     nmdc_XXXXXX_metaAsm.info                              Summary information about the short reads assembly process
+**Short-Reads**                                                                                           Short-reads assembly output directory
+/make_info_file                                     nmdc_XXXXXX_metaAsm.info                              Summary information about the short-reads assembly process
 /finish_asm                                         nmdc_XXXXXX_covstats.txt                              Coverage statistics for assembled contigs
 /finish_asm                                         nmdc_XXXXXX_contigs.fna                               Final contig sequences in FASTA format
 /finish_asm                                         nmdc_XXXXXX_bbcms.fastq.gz                            Error-corrected FASTQ file from bbcms
@@ -223,12 +231,12 @@ Directory                                           File Name                   
 /finish_asm                                         nmdc_XXXXXX_pairedMapped.sam.gz                       SAM file with reads mapped back to assembly
 /finish_asm                                         nmdc_XXXXXX_pairedMapped_sorted.bam                   Sorted BAM file with reads mapped back to assembly
 
-**Long Reads**                                                                                            Long reads assembly output directory
+**Long-Reads**                                                                                            Long-reads assembly output directory
 /finish_lrasm                                        nmdc_XXXXXX_assembly.legend                          Mapping file from contig to scaffold names
 /finish_lrasm                                        nmdc_XXXXXX_contigs.fna                              Final contig sequences in FASTA format
 /finish_lrasm                                        nmdc_XXXXXX_pairedMapped_sorted.bam                  Sorted BAM file with reads mapped back to assembly
 /finish_lrasm                                        nmdc_XXXXXX_read_count_report.txt                    Read count report for validation
-/make_info_file                                      nmdc_XXXXXX_metaAsm.info                             Summary information about the long reads assembly process
+/make_info_file                                      nmdc_XXXXXX_metaAsm.info                             Summary information about the long-reads assembly process
 /finish_lrasm                                        nmdc_XXXXXX_summary.stats                            Summary statistics for assembly
 /finish_lrasm                                        nmdc_XXXXXX_scaffolds.fna                            Final scaffold sequences in FASTA format
 /finish_lrasm                                        nmdc_XXXXXX_pairedMapped.sam.gz                      SAM file with reads mapped back to assembly
@@ -239,6 +247,9 @@ Directory                                           File Name                   
 /finish_lrasm                                        nmdc_XXXXXX_contigs.sorted.bam.pileup.out            BAM file pileup output for contigs
 =================================================== ===================================================== ===============================================================
 
+Download the example MetaAssembly output for the short-reads Illumina run SRR7877884 (10% subset) `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR7877884/SRR7877884-0.1_MetaG/MetagenomeAssembly/>`_.
+
+Download the example MetaAssembly output for the long-reads PacBio run SRR13128014 `here <https://portal.nersc.gov/cfs/m3408/test_data/SRR13128014.pacbio.subsample/MetagenomeAssembly/>`_.
 
 Version History
 ---------------

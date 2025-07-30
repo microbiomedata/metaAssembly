@@ -35,7 +35,7 @@ workflow jgi_metaASM {
             input_files=stage.assembly_input, 
             container=bbtools_container, 
             memory=memory,  
-            paired = paired
+            paired=paired
     }
 
     call predict_memory {
@@ -44,16 +44,15 @@ workflow jgi_metaASM {
             container = bbtools_container
     }
 
-
     call assy {
         input: 
             infile1=bbcms.out1, 
             infile2=bbcms.out2, 
             container=spades_container, 
             threads=predict_memory.resource.cpu, 
-            memory = predict_memory.resource.request + "G",
-            cpu = predict_memory.resource.cpu, 
-            paired = paired
+            memory=predict_memory.resource.request,
+            cpu=predict_memory.resource.cpu, 
+            paired=paired
     }
 
     call create_agp {
@@ -61,8 +60,7 @@ workflow jgi_metaASM {
             scaffolds_in=assy.out, 
             container=bbtools_container, 
             rename_contig_prefix = rename_contig_prefix, 
-            memory = predict_memory.resource.request + "G",
-            cpu = predict_memory.resource.cpu
+            memory = memory
     }
 
     call read_mapping_pairs {
@@ -70,16 +68,15 @@ workflow jgi_metaASM {
             reads=stage.assembly_input, 
             ref=create_agp.outcontigs, 
             container=bbtools_container, 
-            memory = predict_memory.resource.request + "G", 
-            threads=predict_memory.resource.cpu,
-            cpu=predict_memory.resource.cpu,  
+            memory=memory, 
+            threads=threads, 
             paired=paired
     }
 
     call make_info_file {
         input: 
-            bbcms_info= bbcms.outcounts, 
-            assy_info = assy.outlog, 
+            bbcms_info=bbcms.outcounts, 
+            assy_info=assy.outlog, 
             container=bbtools_container, 
             prefix=prefix
     }
@@ -257,7 +254,6 @@ task finish_asm {
        cat ~{asmstats} |jq 'del(.filename)' > stats.json.tmp && mv stats.json.tmp stats.json
 
     >>>
-
     output {
         File outcontigs = "~{prefix}_contigs.fna"
         File outscaffolds = "~{prefix}_scaffolds.fna"
@@ -297,12 +293,6 @@ task read_mapping_pairs{
     String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
     String jvm_threads=select_first([threads,system_cpu])
     }
-    runtime {
-        docker: container
-        memory: memory
-        cpu:  cpu
-        maxRetries: 1
-     }
 
     command<<<
         set -euo pipefail
@@ -348,11 +338,18 @@ task read_mapping_pairs{
     >>>
 
     output {
-      File outbamfile = filename_sorted
-      File outbamfileidx = filename_sorted_idx
-      File outcovfile = filename_cov
-      File outsamfile = filename_outsam
-  }
+        File outbamfile = filename_sorted
+        File outbamfileidx = filename_sorted_idx
+        File outcovfile = filename_cov
+        File outsamfile = filename_outsam
+    }
+
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+        maxRetries: 1
+    }
 }
 
 task create_agp {
@@ -367,11 +364,6 @@ task create_agp {
     String filename_scaffolds="~{prefix}_scaffolds.fna"
     String filename_agp="~{prefix}.agp"
     String filename_legend="~{prefix}_scaffolds.legend"
-    }
-    runtime {
-        docker: container
-        memory: memory
-        cpu:  cpu
     }
 
     command<<<
@@ -405,6 +397,12 @@ task create_agp {
     File outstats = "stats.json"
     File outlegend = filename_legend
     }
+
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+    }
 }
 
 task assy {
@@ -413,7 +411,7 @@ task assy {
     File infile2
     String container
     String? threads
-    String? memory
+    Int? memory
     Int? cpu
     String outprefix="spades3"
     String filename_outfile="~{outprefix}/scaffolds.fasta"
@@ -421,11 +419,6 @@ task assy {
     String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
     String spades_cpu=select_first([threads,system_cpu])
     Boolean paired = true
-    }
-    runtime {
-        docker: container
-        memory: memory
-        cpu: cpu
     }
 
      command <<<
@@ -451,10 +444,16 @@ task assy {
         fi
     >>>
 
-     output {
-            File out = filename_outfile
-            File outlog = filename_spadeslog
-     }
+    output {
+        File out = filename_outfile
+        File outlog = filename_spadeslog
+    }
+
+    runtime {
+        docker: container
+        memory: "~{memory} GiB"
+        cpu: cpu
+    }
 }
 
 task bbcms {
@@ -472,11 +471,6 @@ task bbcms {
     String filename_kmerfile="unique31mer.txt"
     String filename_counts="counts.metadata.json"
     }
-     runtime {
-        docker: container
-        memory: "120 GiB"
-        cpu:  16
-     }
 
     command<<<
         set -euo pipefail
@@ -520,7 +514,7 @@ task bbcms {
         
     >>>
 
-     output {
+    output {
         File out = filename_outfile
         File out1 = if paired then filename_outfile1 else filename_outfile
         File out2 = if paired then filename_outfile2 else filename_outfile
@@ -529,7 +523,13 @@ task bbcms {
         File stderr = filename_errlog
         File outcounts = filename_counts
         Float outkmer = read_float(filename_kmerfile)  
-     }
+    }
+
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+    }
 }
 
 task predict_memory {

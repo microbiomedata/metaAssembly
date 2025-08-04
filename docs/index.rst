@@ -185,33 +185,33 @@ The output directory will contain the following files for long-reads::
 
 Example output stats JSON file::
 
-    {
-       "scaffolds": 58,
-       "contigs": 58,
-       "scaf_bp": 28406,
-       "contig_bp": 28406,
-       "gap_pct": 0.00000,
-       "scaf_N50": 21,
-       "scaf_L50": 536,
-       "ctg_N50": 21,
-       "ctg_L50": 536,
-       "scaf_N90": 49,
-       "scaf_L90": 317,
-       "ctg_N90": 49,
-       "ctg_L90": 317,
-       "scaf_logsum": 22.158,
-       "scaf_powsum": 2.245,
-       "ctg_logsum": 22.158,
-       "ctg_powsum": 2.245,
-       "asm_score": 0.000,
-       "scaf_max": 1117,
-       "ctg_max": 1117,
-       "scaf_n_gt50K": 0,
-       "scaf_l_gt50K": 0,
-       "scaf_pct_gt50K": 0.0,
-       "gc_avg": 0.39129,
-       "gc_std": 0.03033
-    }
+   {
+     "scaffolds": 27,
+     "contigs": 27,
+     "scaf_bp": 9146,
+     "contig_bp": 9146,
+     "gap_pct": 0,
+     "scaf_logsum": 0,
+     "scaf_powsum": 0,
+     "ctg_logsum": 0,
+     "ctg_powsum": 0,
+     "asm_score": 0,
+     "scaf_max": 991,
+     "ctg_max": 991,
+     "gc_avg": 0.66116,
+     "gc_std": 0.06327,
+     "ctg_n50": 12,
+     "ctg_l50": 309,
+     "ctg_n90": 25,
+     "ctg_l90": 284,
+     "scaf_n50": 12,
+     "scaf_l50": 309,
+     "scaf_n90": 25,
+     "scaf_l90": 284,
+     "scaf_n_gt50k": 0,
+     "scaf_l_gt50k": 0,
+     "scaf_pct_gt50k": 0
+   }
 
 
 The table provides all of the output directories, files, and their descriptions.

@@ -1,4 +1,13 @@
 version 1.0
+
+struct Resources {
+    Float kmers
+    Int predicted
+    Int request
+    Int cpu
+    Int runtime_minutes
+}
+
 workflow jgi_metaASM {
     input {
         # String? outdir
@@ -13,88 +22,80 @@ workflow jgi_metaASM {
         String spades_container="staphb/spades:4.0.0"
         String workflowmeta_container="microbiomedata/workflowmeta:1.1.1"
         Boolean paired = true
-        }
+    }
 
     call stage {
         input:
-        container=bbtools_container,
-        input_file=input_file
+            container=bbtools_container,
+            input_file=input_file
     }
 
     call bbcms {
-          input: 
-          input_files=stage.assembly_input, 
-          container=bbtools_container, 
-          memory=memory,  
-          paired = paired
+        input: 
+            input_files=stage.assembly_input, 
+            container=bbtools_container, 
+            memory=memory,  
+            paired=paired
     }
+
+    call predict_memory {
+        input:
+            kmer_count = bbcms.floatkmer,
+            container = bbtools_container
+    }
+
     call assy {
-         input: 
-         infile1=bbcms.out1, 
-         infile2=bbcms.out2, 
-         container=spades_container, 
-         threads=threads,  
-         paired = paired
+        input: 
+            infile1=bbcms.out1, 
+            infile2=bbcms.out2, 
+            container=spades_container, 
+            threads=predict_memory.resource.cpu, 
+            memory=predict_memory.resource.request,
+            cpu=predict_memory.resource.cpu, 
+            paired=paired
     }
+
     call create_agp {
-         input: 
-         scaffolds_in=assy.out, 
-         container=bbtools_container, 
-         rename_contig_prefix = rename_contig_prefix, 
-         memory=memory
+        input: 
+            scaffolds_in=assy.out, 
+            container=bbtools_container, 
+            rename_contig_prefix = rename_contig_prefix, 
+            memory = memory
     }
+
     call read_mapping_pairs {
-         input: 
-         reads=stage.assembly_input, 
-         ref=create_agp.outcontigs, 
-         container=bbtools_container, 
-         memory=memory, 
-         threads=threads,  
-         paired = paired
+        input: 
+            reads=stage.assembly_input, 
+            ref=create_agp.outcontigs, 
+            container=bbtools_container, 
+            memory=memory, 
+            threads=threads, 
+            paired=paired
     }
 
     call make_info_file {
-         input: 
-         bbcms_info= bbcms.outcounts, 
-         assy_info = assy.outlog, 
-         container=bbtools_container, 
-         prefix=prefix
-    }
-    call finish_asm {
-        input:
-        proj=proj,
-        prefix=prefix,
-        # start=stage.start, 
-        container=workflowmeta_container,
-        fasta=create_agp.outcontigs,
-        scaffold=create_agp.outscaffolds,
-        agp=create_agp.outagp,
-        bam=read_mapping_pairs.outbamfile,
-        samgz=read_mapping_pairs.outsamfile,
-        covstats=read_mapping_pairs.outcovfile,
-        asmstats=create_agp.outstats,
-        bbcms_fastq = bbcms.out
+        input: 
+            bbcms_info=bbcms.outcounts, 
+            assy_info=assy.outlog, 
+            container=bbtools_container, 
+            prefix=prefix
     }
 
-    # call make_output{
-    # input:
-    #     outdir= outdir,
-    #     contigs = finish_asm.outcontigs,
-    #     scaffolds = finish_asm.outscaffolds,
-    #     agp=finish_asm.outagp,
-    #     bam=finish_asm.outbam,
-    #     samgz=finish_asm.outsamgz,
-    #     covstats=finish_asm.outcovstats,
-    #     asmstats=finish_asm.outasmstats,
-    #     contigs_name=basename(finish_asm.outcontigs),
-    #     scaffolds_name=basename(finish_asm.outcontigs),
-    #     agp_name=basename(finish_asm.outcontigs),
-    #     bam_name=basename(finish_asm.outcontigs),
-    #     samgz_name=basename(finish_asm.outcontigs),
-    #     covstats_name=basename(finish_asm.outcontigs),
-    #     asmstats_name=basename(finish_asm.outcontigs),
-    #     container = workflowmeta_container
-    # }
+    call finish_asm {
+        input:
+            proj=proj,
+            prefix=prefix,
+            # start=stage.start, 
+            container=workflowmeta_container,
+            fasta=create_agp.outcontigs,
+            scaffold=create_agp.outscaffolds,
+            agp=create_agp.outagp,
+            bam=read_mapping_pairs.outbamfile,
+            samgz=read_mapping_pairs.outsamfile,
+            covstats=read_mapping_pairs.outcovfile,
+            asmstats=create_agp.outstats,
+            bbcms_fastq = bbcms.out
+    }
  
     output {
         File contig=finish_asm.outcontigs
@@ -281,6 +282,7 @@ task read_mapping_pairs{
     File ref
     String container
     String? memory
+    Int? cpu
     String? threads
     Boolean paired = true
     String bbmap_interleaved_flag = if paired then 'interleaved=true' else 'interleaved=false'
@@ -294,12 +296,7 @@ task read_mapping_pairs{
     String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
     String jvm_threads=select_first([threads,system_cpu])
     }
-    runtime {
-            docker: container
-            memory: "120 GiB"
-        cpu:  16
-        maxRetries: 1
-     }
+
     command<<<
         set -euo pipefail
         if [[ ~{reads[0]}  == *.gz ]] ; then
@@ -342,18 +339,27 @@ task read_mapping_pairs{
         rm $mapping_input
 
     >>>
+
     output {
-      File outbamfile = filename_sorted
-      File outbamfileidx = filename_sorted_idx
-      File outcovfile = filename_cov
-      File outsamfile = filename_outsam
-  }
+        File outbamfile = filename_sorted
+        File outbamfileidx = filename_sorted_idx
+        File outcovfile = filename_cov
+        File outsamfile = filename_outsam
+    }
+
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+        maxRetries: 1
+    }
 }
 
 task create_agp {
     input {
     File scaffolds_in
     String? memory
+    Int? cpu
     String container
     String rename_contig_prefix
     String prefix="assembly"
@@ -362,11 +368,7 @@ task create_agp {
     String filename_agp="~{prefix}.agp"
     String filename_legend="~{prefix}_scaffolds.legend"
     }
-    runtime {
-            docker: container
-            memory: "120 GiB"
-            cpu:  16
-     }
+
     command<<<
         set -euo pipefail
         fungalrelease.sh \
@@ -398,26 +400,30 @@ task create_agp {
     File outstats = "stats.json"
     File outlegend = filename_legend
     }
+
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+    }
 }
 
 task assy {
     input{
-     File infile1
-     File infile2
-     String container
-     String? threads
-     String outprefix="spades3"
-     String filename_outfile="~{outprefix}/scaffolds.fasta"
-     String filename_spadeslog ="~{outprefix}/spades.log"
-     String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
-     String spades_cpu=select_first([threads,system_cpu])
-     Boolean paired = true
+    File infile1
+    File infile2
+    String container
+    String? threads
+    Int? memory
+    Int? cpu
+    String outprefix="spades3"
+    String filename_outfile="~{outprefix}/scaffolds.fasta"
+    String filename_spadeslog ="~{outprefix}/spades.log"
+    String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
+    String spades_cpu=select_first([threads,system_cpu])
+    Boolean paired = true
     }
-     runtime {
-        docker: container
-        memory: "120 GiB"
-        cpu:  16
-     }
+
      command <<<
         set -euo pipefail
         if ~{paired}; then
@@ -441,32 +447,33 @@ task assy {
         fi
     >>>
 
-     output {
-            File out = filename_outfile
-            File outlog = filename_spadeslog
-     }
+    output {
+        File out = filename_outfile
+        File outlog = filename_spadeslog
+    }
+
+    runtime {
+        docker: container
+        memory: "~{memory} GiB"
+        cpu: cpu
+    }
 }
 
 task bbcms {
     input{
-     Array[File] input_files
-     String container
-     String? memory
-     Boolean paired = true
-     String filename_outfile="input.corr.fastq.gz"
-     String filename_outfile1="input.corr.left.fastq.gz"
-     String filename_outfile2="input.corr.right.fastq.gz"
-     String filename_readlen="readlen.txt"
-     String filename_outlog="stdout.log"
-     String filename_errlog="stderr.log"
-     String filename_kmerfile="unique31mer.txt"
-     String filename_counts="counts.metadata.json"
+    Array[File] input_files
+    String container
+    String? memory
+    Boolean paired = true
+    String filename_outfile="input.corr.fastq.gz"
+    String filename_outfile1="input.corr.left.fastq.gz"
+    String filename_outfile2="input.corr.right.fastq.gz"
+    String filename_readlen="readlen.txt"
+    String filename_outlog="stdout.log"
+    String filename_errlog="stderr.log"
+    String filename_kmerfile="unique31mer.txt"
+    String filename_counts="counts.metadata.json"
     }
-     runtime {
-        docker: container
-        memory: "120 GiB"
-        cpu:  16
-     }
 
     command<<<
         set -euo pipefail
@@ -510,58 +517,52 @@ task bbcms {
         
     >>>
 
-     output {
-            File out = filename_outfile
-            File out1 = if paired then filename_outfile1 else filename_outfile
-            File out2 = if paired then filename_outfile2 else filename_outfile
-            File outreadlen = filename_readlen
-            File stdout = filename_outlog
-            File stderr = filename_errlog
-            File outcounts = filename_counts
-            File outkmer = filename_kmerfile
-            
-     }
+    output {
+        File out = filename_outfile
+        File out1 = if paired then filename_outfile1 else filename_outfile
+        File out2 = if paired then filename_outfile2 else filename_outfile
+        File outreadlen = filename_readlen
+        File stdout = filename_outlog
+        File stderr = filename_errlog
+        File outcounts = filename_counts
+        File outkmer = filename_kmerfile
+        Float floatkmer = read_float(filename_kmerfile)  
+    }
+
+    runtime {
+        docker: container
+        memory: "120 GiB"
+        cpu:  16
+    }
 }
 
-# task make_output{
-#     input{
-#         String? outdir
-#         File contigs
-#         File scaffolds
-#         File agp
-#         File bam
-#         File samgz
-#         File covstats
-#         File asmstats
-#         String contigs_name=basename(contigs)
-#         String scaffolds_name=basename(contigs)
-#         String agp_name=basename(contigs)
-#         String bam_name=basename(contigs)
-#         String samgz_name=basename(contigs)
-#         String covstats_name=basename(contigs)
-#         String asmstats_name=basename(contigs)
-#         String container
-#     }
-#     command{
-#         if [ ! -z ~{outdir} ]; then
-#             mkdir -p ~{outdir}
-#             cp ~{contigs} ~{scaffolds} ~{agp} ~{bam} \
-#                ~{samgz} ~{covstats} ~{asmstats} ~{outdir}
-#             chmod 764 -R ~{outdir}
-#         fi
-#     }
-#     runtime {
-#         docker: container
-#         memory: "1 GiB"
-#         cpu:  1
-#     }
-#     output{
-#         File? outcontigs = "~{outdir}/~{contigs_name}"
-#         File? outscaffolds = "~{outdir}/~{scaffolds_name}"
-#         File? outagp = "~{outdir}/~{agp_name}"
-#         File? outbam = "~{outdir}/~{bam_name}"
-#         File? outsamgz = "~{outdir}/~{samgz_name}"
-#         File? outcovstats = "~{outdir}/~{covstats_name}"
-#         File? outasmstats = "~{outdir}/~{asmstats_name}"
-#     }
-# }
+task predict_memory {
+    input {
+        Float  kmer_count
+        String container
+        String json_out = "outfile.json"
+    }
+
+    command <<<
+python <<CODE
+import json
+import math
+kmers = ~{kmer_count}
+predicted_mem =  (kmers * 1.416e-08 + 8.676e-01) * 1.1
+predicted_time = (kmers * 2.153e-09 - 6.437e-01) * 1.5
+rounded_time = int(math.ceil(predicted_time / 10.0) * 10) * 60
+rounded_time = 10 if rounded_time <= 1 else rounded_time
+(mem, cpu)  = next(((m, c) for p, m, c in [(120, 110, 16), (250, 240, 32), (500, 490, 32)] if predicted_mem < p), (490, 32))
+with open("~{json_out}", "w") as f:
+    f.write(json.dumps({"kmers": float(round(kmers)), "predicted": int(round(predicted_mem)), "request": int(mem), "cpu": int(cpu), "runtime_minutes": int(rounded_time)}))
+CODE
+>>>
+    runtime {
+        docker: container
+        memory: "2 GiB"
+        cpu: 1
+    }
+    output {
+        Resources resource = read_json(json_out)
+    }
+}

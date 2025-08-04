@@ -40,7 +40,7 @@ workflow jgi_metaASM {
 
     call predict_memory {
         input:
-            kmer_count = bbcms.outkmer,
+            kmer_count = bbcms.floatkmer,
             container = bbtools_container
     }
 
@@ -96,26 +96,6 @@ workflow jgi_metaASM {
             asmstats=create_agp.outstats,
             bbcms_fastq = bbcms.out
     }
-
-    # call make_output{
-    # input:
-    #     outdir= outdir,
-    #     contigs = finish_asm.outcontigs,
-    #     scaffolds = finish_asm.outscaffolds,
-    #     agp=finish_asm.outagp,
-    #     bam=finish_asm.outbam,
-    #     samgz=finish_asm.outsamgz,
-    #     covstats=finish_asm.outcovstats,
-    #     asmstats=finish_asm.outasmstats,
-    #     contigs_name=basename(finish_asm.outcontigs),
-    #     scaffolds_name=basename(finish_asm.outcontigs),
-    #     agp_name=basename(finish_asm.outcontigs),
-    #     bam_name=basename(finish_asm.outcontigs),
-    #     samgz_name=basename(finish_asm.outcontigs),
-    #     covstats_name=basename(finish_asm.outcontigs),
-    #     asmstats_name=basename(finish_asm.outcontigs),
-    #     container = workflowmeta_container
-    # }
  
     output {
         File contig=finish_asm.outcontigs
@@ -522,7 +502,8 @@ task bbcms {
         File stdout = filename_outlog
         File stderr = filename_errlog
         File outcounts = filename_counts
-        Float outkmer = read_float(filename_kmerfile)  
+        File outkmer = filename_kmerfile
+        Float floatkmer = read_float(filename_kmerfile)  
     }
 
     runtime {
@@ -534,10 +515,10 @@ task bbcms {
 
 task predict_memory {
     input {
-        Float kmer_count
+        Float  kmer_count
         String container
+        String json_out = "outfile.json"
     }
-    String json_out = "outfile.json"
 
     command <<<
 python <<CODE
@@ -548,7 +529,7 @@ predicted_mem =  (kmers * 1.416e-08 + 8.676e-01) * 1.1
 predicted_time = (kmers * 2.153e-09 - 6.437e-01) * 1.5
 rounded_time = int(math.ceil(predicted_time / 10.0) * 10) * 60
 rounded_time = 10 if rounded_time <= 1 else rounded_time
-(mem, cpu)  = next(((m, c) for p, m, c in [(120, 110, 16), (250, 240, 32), (500, 490, 32), (1480, 1500, 72)] if predicted_mem < p), (1500, 72))
+(mem, cpu)  = next(((m, c) for p, m, c in [(120, 110, 16), (250, 240, 32), (500, 490, 32)] if predicted_mem < p), (490, 32))
 with open("~{json_out}", "w") as f:
     f.write(json.dumps({"kmers": float(round(kmers)), "predicted": int(round(predicted_mem)), "request": int(mem), "cpu": int(cpu), "runtime_minutes": int(rounded_time)}))
 CODE
@@ -562,46 +543,3 @@ CODE
         Resources resource = read_json(json_out)
     }
 }
-
-# task make_output{
-#     input{
-#         String? outdir
-#         File contigs
-#         File scaffolds
-#         File agp
-#         File bam
-#         File samgz
-#         File covstats
-#         File asmstats
-#         String contigs_name=basename(contigs)
-#         String scaffolds_name=basename(contigs)
-#         String agp_name=basename(contigs)
-#         String bam_name=basename(contigs)
-#         String samgz_name=basename(contigs)
-#         String covstats_name=basename(contigs)
-#         String asmstats_name=basename(contigs)
-#         String container
-#     }
-#     command{
-#         if [ ! -z ~{outdir} ]; then
-#             mkdir -p ~{outdir}
-#             cp ~{contigs} ~{scaffolds} ~{agp} ~{bam} \
-#                ~{samgz} ~{covstats} ~{asmstats} ~{outdir}
-#             chmod 764 -R ~{outdir}
-#         fi
-#     }
-#     runtime {
-#         docker: container
-#         memory: "1 GiB"
-#         cpu:  1
-#     }
-#     output{
-#         File? outcontigs = "~{outdir}/~{contigs_name}"
-#         File? outscaffolds = "~{outdir}/~{scaffolds_name}"
-#         File? outagp = "~{outdir}/~{agp_name}"
-#         File? outbam = "~{outdir}/~{bam_name}"
-#         File? outsamgz = "~{outdir}/~{samgz_name}"
-#         File? outcovstats = "~{outdir}/~{covstats_name}"
-#         File? outasmstats = "~{outdir}/~{asmstats_name}"
-#     }
-# }

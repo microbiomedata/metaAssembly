@@ -203,36 +203,60 @@ task finish_asm {
     String prefix 
     String orig_prefix="scaffold"
     String sed="s/~{orig_prefix}_/~{proj}_/g"
-    # String start
     }
 
     command<<<
-
         set -euo pipefail
         end=`date --iso-8601=seconds`
-        # ln -s ~{fasta} ~{prefix}_contigs.fna
-        # ln -s ~{scaffold} ~{prefix}_scaffolds.fna
-        # ln -s ~{covstats} ~{prefix}_covstats.txt
-        # ln -s ~{agp} ~{prefix}_assembly.agp
 
-        ##RE-ID
+        ## RE-ID
         cat ~{fasta} | sed ~{sed} > ~{prefix}_contigs.fna
         cat ~{scaffold} | sed ~{sed} > ~{prefix}_scaffolds.fna
         cat ~{covstats} | sed ~{sed} > ~{prefix}_covstats.txt
         cat ~{agp} | sed ~{sed} > ~{prefix}_assembly.agp
         ln ~{bbcms_fastq} ~{prefix}_bbcms.fastq.gz || ln -s ~{bbcms_fastq} ~{prefix}_bbcms.fastq.gz
 
-       ## Bam file     
-       samtools view -h ~{bam} | sed ~{sed} | \
+        ## Bam file     
+        samtools view -h ~{bam} | sed ~{sed} | \
           samtools view -hb -o ~{prefix}_pairedMapped_sorted.bam
-       ## Sam.gz file
-       samtools view -h ~{samgz} | sed ~{sed} | \
+
+        ## Sam.gz file
+        samtools view -h ~{samgz} | sed ~{sed} | \
           gzip -c - > ~{prefix}_pairedMapped.sam.gz
 
-       # Remove an extra field from the stats
-       cat ~{asmstats} |jq 'del(.filename)' > stats.json.tmp && mv stats.json.tmp stats.json
+        ## Remove an extra field from the stats and normalize keys
+        cat ~{asmstats} | jq 'del(.filename)' > stats.json.tmp
+
+        python3 <<EOF
+import json
+
+with open("stats.json.tmp") as f:
+    stats = json.load(f)
+
+key_map = {
+    "ctg_N50": "ctg_n50",
+    "ctg_L50": "ctg_l50",
+    "ctg_N90": "ctg_n90",
+    "ctg_L90": "ctg_l90",
+    "scaf_N50": "scaf_n50",
+    "scaf_L50": "scaf_l50",
+    "scaf_N90": "scaf_n90",
+    "scaf_L90": "scaf_l90",
+    "scaf_n_gt50K": "scaf_n_gt50k",
+    "scaf_l_gt50K": "scaf_l_gt50k",
+    "scaf_pct_gt50K": "scaf_pct_gt50k"
+}
+
+for old, new in key_map.items():
+    if old in stats:
+        stats[new] = stats.pop(old)
+
+with open("stats.json", "w") as f:
+    json.dump(stats, f, indent=2)
+EOF
 
     >>>
+
     output {
         File outcontigs = "~{prefix}_contigs.fna"
         File outscaffolds = "~{prefix}_scaffolds.fna"
@@ -250,7 +274,6 @@ task finish_asm {
         cpu:  1
     }
 }
-
 
 task read_mapping_pairs{
     input {

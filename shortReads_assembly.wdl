@@ -11,8 +11,6 @@ struct Resources {
 workflow jgi_metaASM {
     input {
         # String? outdir
-        String? memory
-        String? threads
         String? input_file
         String proj
         String prefix=sub(proj, ":", "_")
@@ -22,63 +20,99 @@ workflow jgi_metaASM {
         String spades_container="staphb/spades:4.0.0"
         String workflowmeta_container="microbiomedata/workflowmeta:1.1.1"
         Boolean paired = true
+        Int     stage_mem = 4       # GB
+        Int     stage_cpu = 2
+        Int     stage_run_mins = 20
+        Int     bbcms_cpu = 40
+        Int     bbcms_mem = 120     # GB
+        Int     bbcms_run_mins = 45
+        String  pred_mem = "100MB"
+        Int     pred_cpu = 1
+        Int     pred_run_mins = 5
+        Int     agp_mem = 10        # GB
+        Int     agp_cpu = 1
+        Int     agp_run_mins = 5
+        Int     mapping_mem = 120   # GB
+        Int     mapping_cpu = 32
+        Int     mapping_run_mins = 60
+        String  make_info_mem = "100MB"
+        Int     make_info_cpu = 1
+        Int     make_info_run_mins = 5
+        String  finish_mem = "100MB"
+        Int     finish_cpu = 2
+        Int     finish_run_mins = 30
     }
 
     call stage {
         input:
+            input_file=input_file,
             container=bbtools_container,
-            input_file=input_file
+            memory=stage_mem,
+            cpu = stage_cpu,
+            run_mins = stage_run_mins
     }
 
     call bbcms {
         input: 
             input_files=stage.assembly_input, 
+            paired=paired,
             container=bbtools_container, 
-            memory=memory,  
-            paired=paired
+            memory= bbcms_mem,  
+            cpu = bbcms_cpu,
+            run_mins = bbcms_run_mins
     }
 
     call predict_memory {
         input:
             kmer_count = bbcms.floatkmer,
-            container = bbtools_container
+            container = bbtools_container,
+            memory=pred_mem,
+            cpu = pred_cpu,
+            run_mins = pred_run_mins
     }
 
     call assy {
         input: 
             infile1=bbcms.out1, 
             infile2=bbcms.out2, 
+            paired=paired,
             container=spades_container, 
             threads=predict_memory.resource.cpu, 
             memory=predict_memory.resource.request,
             cpu=predict_memory.resource.cpu, 
-            paired=paired
+            run_mins = predict_memory.resource.runtime_minutes
     }
 
     call create_agp {
         input: 
             scaffolds_in=assy.out, 
-            container=bbtools_container, 
             rename_contig_prefix = rename_contig_prefix, 
-            memory = memory
+            container=bbtools_container, 
+            memory=agp_mem,
+            cpu = agp_cpu,
+            run_mins = agp_run_mins
     }
 
     call read_mapping_pairs {
         input: 
             reads=stage.assembly_input, 
             ref=create_agp.outcontigs, 
+            paired=paired,
             container=bbtools_container, 
-            memory=memory, 
-            threads=threads, 
-            paired=paired
+            memory=mapping_mem, 
+            cpu = mapping_cpu,
+            run_mins = mapping_run_mins
     }
 
     call make_info_file {
         input: 
             bbcms_info=bbcms.outcounts, 
             assy_info=assy.outlog, 
+            prefix=prefix,
             container=bbtools_container, 
-            prefix=prefix
+            memory=make_info_mem,
+            cpu = make_info_cpu,
+            run_mins = make_info_run_mins
     }
 
     call finish_asm {
@@ -86,7 +120,6 @@ workflow jgi_metaASM {
             proj=proj,
             prefix=prefix,
             # start=stage.start, 
-            container=workflowmeta_container,
             fasta=create_agp.outcontigs,
             scaffold=create_agp.outscaffolds,
             agp=create_agp.outagp,
@@ -94,7 +127,11 @@ workflow jgi_metaASM {
             samgz=read_mapping_pairs.outsamfile,
             covstats=read_mapping_pairs.outcovfile,
             asmstats=create_agp.outstats,
-            bbcms_fastq = bbcms.out
+            bbcms_fastq = bbcms.out,
+            container=workflowmeta_container,
+            memory=finish_mem,
+            cpu = finish_cpu,
+            run_mins = finish_run_mins
     }
  
     output {
@@ -119,24 +156,27 @@ workflow jgi_metaASM {
 
 task stage {
    input { 
-   String container
-   String? input_file
-   String memory = "4G"
-   String target = "staged.fastq.gz"
-   String output1 = "input.left.fastq.gz"
-   String output2 = "input.right.fastq.gz"
+        String? input_file
+        String target = "staged.fastq.gz"
+        String output1 = "input.left.fastq.gz"
+        String output2 = "input.right.fastq.gz"
+        String container
+        Int    memory
+        Int    xmxmem = floor(memory * 0.75)
+        Int    cpu
+        Int    run_mins
    }
 
    command <<<
        set -euo pipefail
-       if [ $( echo ~{input_file}|egrep -c "https*:") -gt 0 ] ; then
+       if [ "$( echo ~{input_file} | grep -E -c 'https\?:' )" -gt 0 ] ; then
            wget ~{input_file} -O ~{target}
        else
            ln -s ~{input_file} ~{target} || cp ~{input_file} ~{target}
        fi
 
         reformat.sh \
-        ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx10G" }\
+        ~{if (defined(memory)) then "-Xmx" + xmxmem + "G" else "-Xmx10G" }\
         in=~{target} \
         out1=~{output1} \
         out2=~{output2}    
@@ -150,25 +190,29 @@ task stage {
       String start = read_string("start.txt")
    }
    runtime {
-     cpu:  2
-     memory: "4 GiB"
-     maxRetries: 1
-     docker: container
+        docker: container
+        memory: memory
+        cpu:  cpu
+        runtime_minutes: run_mins
+        maxRetries: 1
    }
 }
 
 task make_info_file {
     input{
-    File assy_info
-    File bbcms_info
-    String prefix
-    String container
+        File assy_info
+        File bbcms_info
+        String prefix
+        String container
+        String memory
+        Int    cpu
+        Int    run_mins
     }
 
     command<<<
         set -euo pipefail
-        bbtools_version=`grep BBToolsVer ~{bbcms_info}| awk '{print $2}' | sed -e 's/"//g' -e 's/,//' `
-        spades_version=`grep  'SPAdes version' ~{assy_info} | awk '{print $3}'`
+        bbtools_version=$( grep BBToolsVer ~{bbcms_info} | awk '{print $2}' | sed -e 's/"//g' -e 's/,//' ) 
+        spades_version=$( grep  'SPAdes version' ~{assy_info} | awk '{print $3}' )
         echo -e "The workflow takes paired-end reads runs error correction by bbcms.sh (BBTools(1) version $bbtools_version)." > ~{prefix}_metaAsm.info
         echo -e "The clean reads are assembled by metaSpades(2) version $spades_version with parameters, --only-assembler -k 33,55,77,99,127  --meta" >> ~{prefix}_metaAsm.info
         echo -e "After assembly, Contigs and Scaffolds are consumed by the *create_agp* task to rename the FASTA header and generate an AGP format (https://www.ncbi.nlm.nih.gov/assembly/agp/AGP_Specification/) file which describes the assembly"  >> ~{prefix}_metaAsm.info
@@ -182,33 +226,37 @@ task make_info_file {
         File asminfo = "~{prefix}_metaAsm.info"
     }
     runtime {
-        memory: "1 GiB"
-        cpu:  1
-        maxRetries: 1
         docker: container
+        memory: memory
+        cpu:  cpu
+        runtime_minutes: run_mins
+        maxRetries: 1
     }
 }
 
 task finish_asm {
     input {
-    File fasta
-    File scaffold
-    File? agp
-    File bam
-    File? samgz
-    File? covstats
-    File asmstats
-    File bbcms_fastq
-    String container
-    String proj
-    String prefix 
-    String orig_prefix="scaffold"
-    String sed="s/~{orig_prefix}_/~{proj}_/g"
+        File fasta
+        File scaffold
+        File? agp
+        File bam
+        File? samgz
+        File? covstats
+        File asmstats
+        File bbcms_fastq
+        String proj
+        String prefix 
+        String orig_prefix="scaffold"
+        String sed="s/~{orig_prefix}_/~{proj}_/g"
+        String container
+        String memory
+        Int    cpu
+        Int    run_mins
     }
 
     command<<<
         set -euo pipefail
-        end=`date --iso-8601=seconds`
+        # end=$( date --iso-8601=seconds )
 
         ## RE-ID
         cat ~{fasta} | sed ~{sed} > ~{prefix}_contigs.fna
@@ -229,33 +277,32 @@ task finish_asm {
         cat ~{asmstats} | jq 'del(.filename)' > stats.json.tmp
 
         python3 <<EOF
-import json
+        import json
 
-with open("stats.json.tmp") as f:
-    stats = json.load(f)
+        with open("stats.json.tmp") as f:
+            stats = json.load(f)
 
-key_map = {
-    "ctg_N50": "ctg_n50",
-    "ctg_L50": "ctg_l50",
-    "ctg_N90": "ctg_n90",
-    "ctg_L90": "ctg_l90",
-    "scaf_N50": "scaf_n50",
-    "scaf_L50": "scaf_l50",
-    "scaf_N90": "scaf_n90",
-    "scaf_L90": "scaf_l90",
-    "scaf_n_gt50K": "scaf_n_gt50k",
-    "scaf_l_gt50K": "scaf_l_gt50k",
-    "scaf_pct_gt50K": "scaf_pct_gt50k"
-}
+        key_map = {
+            "ctg_N50": "ctg_n50",
+            "ctg_L50": "ctg_l50",
+            "ctg_N90": "ctg_n90",
+            "ctg_L90": "ctg_l90",
+            "scaf_N50": "scaf_n50",
+            "scaf_L50": "scaf_l50",
+            "scaf_N90": "scaf_n90",
+            "scaf_L90": "scaf_l90",
+            "scaf_n_gt50K": "scaf_n_gt50k",
+            "scaf_l_gt50K": "scaf_l_gt50k",
+            "scaf_pct_gt50K": "scaf_pct_gt50k"
+        }
 
-for old, new in key_map.items():
-    if old in stats:
-        stats[new] = stats.pop(old)
+        for old, new in key_map.items():
+            if old in stats:
+                stats[new] = stats.pop(old)
 
-with open("stats.json", "w") as f:
-    json.dump(stats, f, indent=2)
-EOF
-
+        with open("stats.json", "w") as f:
+            json.dump(stats, f, indent=2)
+        EOF
     >>>
 
     output {
@@ -271,8 +318,10 @@ EOF
 
     runtime {
         docker: container
-        memory: "1 GiB"
-        cpu:  1
+        memory: memory
+        cpu:  cpu
+        runtime_minutes: run_mins
+        maxRetries: 1
     }
 }
 
@@ -281,9 +330,11 @@ task read_mapping_pairs{
     Array[File] reads
     File ref
     String container
-    String? memory
-    Int? cpu
-    String? threads
+    Int     memory
+    Int     xmxmem = floor(memory * 0.75)
+    Int     cpu
+    Int     threads = cpu * 2
+    Int     run_mins
     Boolean paired = true
     String bbmap_interleaved_flag = if paired then 'interleaved=true' else 'interleaved=false'
 
@@ -293,7 +344,7 @@ task read_mapping_pairs{
     String filename_sorted_idx="pairedMapped_sorted.bam.bai"
     String filename_bamscript="to_bam.sh"
     String filename_cov="covstats.txt"
-    String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
+    String system_cpu="$( grep \"model name\" /proc/cpuinfo | wc -l )"
     String jvm_threads=select_first([threads,system_cpu])
     }
 
@@ -309,12 +360,12 @@ task read_mapping_pairs{
         fi
 
         bbmap.sh \
-        ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx105G" } \
+        ~{if (defined(memory)) then "-Xmx" + xmxmem + "G" else "-Xmx105G" } \
         threads=~{jvm_threads} \
         nodisk=true \
         ~{bbmap_interleaved_flag} \
         ambiguous=random \
-        in=$mapping_input \
+        in="$mapping_input" \
         ref=~{ref} \
         out=~{filename_unsorted} \
         covstats=~{filename_cov} \
@@ -330,13 +381,13 @@ task read_mapping_pairs{
         samtools index ~{filename_sorted}
 
         reformat.sh \
-        ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx105G" } \
+        ~{if (defined(memory)) then "-Xmx" + xmxmem + "G" else "-Xmx105G" } \
         in=~{filename_unsorted} \
         out=~{filename_outsam} \
         overwrite=true
 
         ln -s ~{filename_cov} mapping_stats.txt
-        rm $mapping_input
+        rm "$mapping_input"
 
     >>>
 
@@ -349,8 +400,9 @@ task read_mapping_pairs{
 
     runtime {
         docker: container
-        memory: "120 GiB"
-        cpu:  16
+        memory: memory
+        cpu:  cpu
+        runtime_minutes: run_mins
         maxRetries: 1
     }
 }
@@ -358,21 +410,23 @@ task read_mapping_pairs{
 task create_agp {
     input {
     File scaffolds_in
-    String? memory
-    Int? cpu
-    String container
     String rename_contig_prefix
     String prefix="assembly"
     String filename_contigs="~{prefix}_contigs.fna"
     String filename_scaffolds="~{prefix}_scaffolds.fna"
     String filename_agp="~{prefix}.agp"
     String filename_legend="~{prefix}_scaffolds.legend"
+    String container
+    Int    memory
+    Int    xmxmem = floor(memory * 0.75)
+    Int    cpu
+    Int    run_mins
     }
 
     command<<<
         set -euo pipefail
         fungalrelease.sh \
-        ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx105G" } \
+        ~{if (defined(memory)) then "-Xmx" + xmxmem + "G" else "-Xmx105G" } \
         in=~{scaffolds_in} \
         out=~{filename_scaffolds} \
         outc=~{filename_contigs} \
@@ -403,8 +457,10 @@ task create_agp {
 
     runtime {
         docker: container
-        memory: "120 GiB"
-        cpu:  16
+        memory: "~{memory} GiB"
+        cpu:  cpu
+        runtime_minutes: run_mins
+        maxRetries: 1
     }
 }
 
@@ -413,13 +469,14 @@ task assy {
     File infile1
     File infile2
     String container
-    String? threads
+    Int? threads
     Int? memory
     Int? cpu
+    Int run_mins
     String outprefix="spades3"
     String filename_outfile="~{outprefix}/scaffolds.fasta"
     String filename_spadeslog ="~{outprefix}/spades.log"
-    String system_cpu="$(grep \"model name\" /proc/cpuinfo | wc -l)"
+    String system_cpu="$( grep \"model name\" /proc/cpuinfo | wc -l )"
     String spades_cpu=select_first([threads,system_cpu])
     Boolean paired = true
     }
@@ -456,6 +513,7 @@ task assy {
         docker: container
         memory: "~{memory} GiB"
         cpu: cpu
+        runtime_minutes: run_mins
     }
 }
 
@@ -463,7 +521,10 @@ task bbcms {
     input{
     Array[File] input_files
     String container
-    String? memory
+    Int    memory
+    Int    xmxmem = floor(memory * 0.75)
+    Int    cpu
+    Int    run_mins
     Boolean paired = true
     String filename_outfile="input.corr.fastq.gz"
     String filename_outfile1="input.corr.left.fastq.gz"
@@ -478,21 +539,21 @@ task bbcms {
     command<<<
         set -euo pipefail
         if file --mime -b ~{input_files[0]} | grep gzip; then
-             cat ~{sep=" " input_files} > infile.fastq.gz
-             export bbcms_input="infile.fastq.gz"
+            cat ~{sep=" " input_files} > infile.fastq.gz
+            export bbcms_input="infile.fastq.gz"
         fi
 
         if file --mime -b ~{input_files[0]} | grep plain; then
-             cat ~{sep=" " input_files} > infile.fastq
-             export bbcms_input="infile.fastq"
+            cat ~{sep=" " input_files} > infile.fastq
+            export bbcms_input="infile.fastq"
         fi
 
         bbcms.sh \
-        ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx105G" } \
+        ~{if (defined(memory)) then "-Xmx" + xmxmem + "G" else "-Xmx105G" } \
         metadatafile=~{filename_counts} \
         mincount=2 \
         highcountfraction=0.6 \
-        in=$bbcms_input \
+        in="$bbcms_input" \
         out=~{filename_outfile} \
         > >(tee -a ~{filename_outlog}) \
         2> >(tee -a ~{filename_errlog} >&2) \
@@ -502,18 +563,18 @@ task bbcms {
         
         if ~{paired}; then
             reformat.sh \
-            ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx105G" } \
+            ~{if (defined(memory)) then "-Xmx" + xmxmem + "G" else "-Xmx105G" } \
             in=~{filename_outfile} \
             out1=~{filename_outfile1} \
             out2=~{filename_outfile2}
         fi
 
         readlength.sh \
-        ~{if (defined(memory)) then "-Xmx" + memory else "-Xmx105G" } \
+        ~{if (defined(memory)) then "-Xmx" + xmxmem + "G" else "-Xmx105G" } \
         in=~{filename_outfile} \
         out=~{filename_readlen}
 
-        rm $bbcms_input
+        rm "$bbcms_input"
         
     >>>
 
@@ -531,36 +592,43 @@ task bbcms {
 
     runtime {
         docker: container
-        memory: "120 GiB"
-        cpu:  16
+        memory: "~{memory} GiB"
+        cpu:  cpu
+        runtime_minutes: run_mins
+        maxRetries: 1
     }
 }
 
 task predict_memory {
     input {
         Float  kmer_count
-        String container
         String json_out = "outfile.json"
+        String container
+        String memory
+        Int    cpu
+        Int    run_mins
     }
 
     command <<<
-python <<CODE
-import json
-import math
-kmers = ~{kmer_count}
-predicted_mem =  (kmers * 1.416e-08 + 8.676e-01) * 1.1
-predicted_time = (kmers * 2.153e-09 - 6.437e-01) * 1.5
-rounded_time = int(math.ceil(predicted_time / 10.0) * 10) * 60
-rounded_time = 10 if rounded_time <= 1 else rounded_time
-(mem, cpu)  = next(((m, c) for p, m, c in [(120, 110, 16), (250, 240, 32), (500, 490, 32)] if predicted_mem < p), (490, 32))
-with open("~{json_out}", "w") as f:
-    f.write(json.dumps({"kmers": float(round(kmers)), "predicted": int(round(predicted_mem)), "request": int(mem), "cpu": int(cpu), "runtime_minutes": int(rounded_time)}))
-CODE
->>>
+        python <<CODE
+        import json
+        import math
+        kmers = ~{kmer_count}
+        predicted_mem =  (kmers * 1.416e-08 + 8.676e-01) * 1.1
+        predicted_time = (kmers * 2.153e-09 - 6.437e-01) * 1.5
+        rounded_time = int(math.ceil(predicted_time / 10.0) * 10) * 60
+        rounded_time = 10 if rounded_time <= 1 else rounded_time
+        (mem, cpu)  = next(((m, c) for p, m, c in [(120, 110, 16), (250, 240, 32), (500, 490, 32)] if predicted_mem < p), (490, 32))
+        with open("~{json_out}", "w") as f:
+            f.write(json.dumps({"kmers": float(round(kmers)), "predicted": int(round(predicted_mem)), "request": int(mem), "cpu": int(cpu), "runtime_minutes": int(rounded_time)}))
+        CODE
+    >>>
     runtime {
         docker: container
-        memory: "2 GiB"
-        cpu: 1
+        memory: memory
+        cpu:  cpu
+        runtime_minutes: run_mins
+        maxRetries: 1
     }
     output {
         Resources resource = read_json(json_out)

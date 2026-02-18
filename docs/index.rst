@@ -261,4 +261,4 @@ Point of contact
 
 - Original author: Brian Foster <bfoster@lbl.gov>
 
-- Package maintainer: Chienchi Lo <chienchi@lanl.gov>
+- Package maintainer: Samantha Obermiller samantha.obermiller@pnnl.gov
